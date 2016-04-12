@@ -1,0 +1,22 @@
+refresh_rate = 30
+
+# [appenders.console]
+# kind = "console"
+
+# [[appenders.console.filter]]
+# kind = "threshold"
+# level = "error"
+
+[appenders.file]
+kind = "file"
+path = "gibbs.log"
+# pattern = "{d} [{t}] {l} {M}:{m}{n}"
+
+[root]
+level = "debug"
+appenders = ["file"]
+
+# [loggers."test::a"]
+# level = "info"
+# appenders = ["file"]
+# additive = true

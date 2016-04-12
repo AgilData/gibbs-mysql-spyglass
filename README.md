@@ -1,2 +1,1 @@
-# gibbs-mysql-spyglass
-Gibbs MySQL Spyglass
+# mysql-analyzer

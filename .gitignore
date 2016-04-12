@@ -1,0 +1,14 @@
+*~
+*.o
+*.so
+*.rlib
+*.dylib
+
+.sync-config.cson
+
+target
+gibbs-capture.dat
+gibbs.log
+examples
+
+.DS_Store
