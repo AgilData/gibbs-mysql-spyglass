@@ -96,7 +96,7 @@ fn mysql_frag(need: usize, bs: &[u8]) -> (usize, usize, &[u8]) {
     let used = cmp::min(need, bs.len());
     let pyld = &bs[0..used];
     let need = need - used;
-
+    debug!("mysql_frag() used={:?} need={:?} pyld={:?}", used, need, mk_ascii(pyld));
     (used, need, pyld)
 }
 
