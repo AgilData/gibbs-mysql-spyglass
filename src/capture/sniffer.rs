@@ -40,6 +40,7 @@ enum PcktState {
 }
 
 fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLState, Option<String>) {
+    debug!("state_act: c2s={:?}, nxt_seq={:?}, lst={:?}, pyld={:?}", c2s, nxt_seq, lst, pyld);
     let redact = regex!(r#"(?x)( (?P<p>[\s=\(\+-/\*]) (
                             '[^'\\]*((\\.|'')[^'\\]*)*' |
                             "[^"\\]*((\\.|"")[^"\\]*)*" |
@@ -111,16 +112,22 @@ fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
 }
 
 fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<String>) {
+    debug!("nxt_state c2s={:?}, bs={:?}, ", c2s, bs);
     match st {
         PcktState::Start { lst, } => { debug!("PcktState::Start {{ {:?} }}", lst);
-            let (used, need, seq, pyld) = mysql_next(bs);
-            if need == 0 {
-                let (nxt, out) = state_act(c2s, seq, lst, pyld);
-                (used, PcktState::Start { lst: nxt, }, out)
-            } else {
-                let mut v: Vec<u8> = Vec::new();
-                v.extend_from_slice(pyld);
-                (used, PcktState::Frag { need: need, part: v, seq: seq, lst: lst }, None)
+            match lst {
+                MySQLState::Wait if !c2s => (bs.len(), PcktState::Start { lst: lst, }, None),
+                _ => {
+                    let (used, need, seq, pyld) = mysql_next(bs);
+                    if need == 0 {
+                        let (nxt, out) = state_act(c2s, seq, lst, pyld);
+                        (used, PcktState::Start { lst: nxt, }, out)
+                    } else {
+                        let mut v: Vec<u8> = Vec::new();
+                        v.extend_from_slice(pyld);
+                        (used, PcktState::Frag { need: need, part: v, seq: seq, lst: lst }, None)
+                    }
+                },
             }
         },
 
@@ -139,16 +146,17 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
 }
 
 fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
-    debug!("tcp_pyld: c2s {:?}, strm {:?}, bs {}", c2s, strm, mk_ascii(bs));
+    debug!("tcp_pyld: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
 
     STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut tmp = f.borrow_mut();
         let mut i: usize = 0;
         let mut st = match hm.get(&strm) {
             Some(mss) => mss.clone(),
-            None => PcktState::Start { lst: MySQLState::Wait, },
+            None => if c2s { PcktState::Start { lst: MySQLState::Wait, } } else { return; },
         };
         while i < bs.len() {
             let (used, nxt, out) = nxt_state(c2s, st, &bs[i..]);
+            debug!("tcp_pyld: used={:?}, nxt={:?}, out={:?}", used, nxt, out);
             i += used;
             st = nxt;
             if out.is_some() {
