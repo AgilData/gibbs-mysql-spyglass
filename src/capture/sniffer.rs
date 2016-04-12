@@ -1,5 +1,5 @@
 use ::OUT;
-use util::COpts;
+use util::{COpts, mk_ascii};
 
 use std::io::Write;
 use std::net::IpAddr;
@@ -139,7 +139,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
 }
 
 fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
-    debug!("tcp_pyld: c2s {:?}, strm {:?}, bs {:?}", c2s, bs, strm);
+    debug!("tcp_pyld: c2s {:?}, strm {:?}, bs {}", c2s, strm, mk_ascii(bs));
 
     STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut tmp = f.borrow_mut();
         let mut i: usize = 0;
