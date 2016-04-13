@@ -92,7 +92,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         ChkKey
     },
     ChkKey => {
-        if inp.len() != 40  { //97947bf70fecdba64c33574ad5c1c1a365bd0c30
+        if inp.len() != 40 {
             again("Key must be 40 hex characters long");
             ChkKey
         // } else if { check for all hex characters here
