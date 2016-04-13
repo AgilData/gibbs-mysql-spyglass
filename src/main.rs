@@ -34,6 +34,7 @@ use std::thread;
 mod util;
 use util::{COpts, TMP_FILE};
 use std::net::{IpAddr, Ipv4Addr};
+use std::fmt::Display;
 
 mod capture;
 use capture::client::schema;
@@ -78,8 +79,8 @@ enum CLIState {
 
 use CLIState::*;
 
-fn again(msg: &str) {
-    println!("{}, please try again\n> ", msg);
+fn again(msg: &str, dflt: &Display) {
+    println!("{}, please try again {} ", msg, dflt);
 }
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
@@ -88,12 +89,12 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskKey, "", opt)
     },
     AskKey => {
-        println!("What is your API Key (get one at https://gibbs.agildata.com/)? > ");
+        println!("What is your API Key (get one at https://gibbs.agildata.com/)? [{}] ", opt.key);
         ChkKey
     },
     ChkKey => {
         if inp.len() != 40 {
-            again("Key must be 40 hex characters long");
+            again("Key must be 40 hex characters long", &opt.key);
             ChkKey
         // } else if { check for all hex characters here
         } else {
@@ -102,66 +103,74 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         }
     },
     AskHost => {
-        println!("Great! Let's set up your MySQL connection. What's your MySQL host? > ");
+        println!("Great! Let's set up your MySQL connection. What's your MySQL host? [{}] ", opt.host);
         ChkHost
     },
-    ChkHost => { match inp.parse::<IpAddr>() {
-        Ok(h) => {
-            opt.host = h;
-            cli_act(AskPort, "", opt)
-        },
-        Err(e) => {
-            again(&e.to_string());
-            lst
-        },
-    } },
+    ChkHost => {
+        if inp.len() > 0 {
+            match inp.parse::<IpAddr>() {
+                Ok(h) => {
+                    opt.host = h;
+                    cli_act(AskPort, "", opt)
+                },
+                Err(e) => {
+                    again(&e.to_string(), &opt.host);
+                    lst
+                },
+            }
+        } else { cli_act(AskPort, "", opt) }
+     },
     AskPort => {
-        println!("And your MySQL port? > ");
+        println!("And your MySQL port? [{}] ", opt.port);
         ChkPort
     },
-    ChkPort => { match u16::from_str_radix(&inp, 10) {
-        Ok(p) => {
-            opt.port = p;
-            cli_act(AskUser, "", opt)
-        },
-        Err(e) => {
-            again(&e.to_string());
-            lst
-        },
-    } },
+    ChkPort => {
+        if inp.len() > 0 {
+            match u16::from_str_radix(&inp, 10) {
+                Ok(p) => {
+                    opt.port = p;
+                    cli_act(AskUser, "", opt)
+                },
+                Err(e) => {
+                    again(&e.to_string(), &opt.port);
+                    lst
+                },
+            }
+        } else { cli_act(AskUser, "", opt) }
+    },
     AskUser => {
-        println!("And your MySQL username? > ");
+        println!("And your MySQL username? [{}] ", opt.user);
         ChkUser
     },
     ChkUser => {
-        opt.user = inp.to_owned();
+        if inp.len() > 0 { opt.user = inp.to_owned(); }
         cli_act(AskPass, "", opt)
     },
     AskPass => {
-        println!("And your MySQL password? > ");
+        println!("And your MySQL password? [] ");
         ChkPass
     },
     ChkPass => {
-        opt.pass = inp.to_owned();
+        if inp.len() > 0 { opt.pass = inp.to_owned(); }
         cli_act(AskDb, "", opt)
     },
     AskDb => {
-        println!("And the MySQL database to analyze > ");
+        println!("And the MySQL database to analyze? [{}] ", opt.db);
         ChkDb
     },
     ChkDb => {
-        opt.db = inp.to_owned();
+        if inp.len() > 0 { opt.db = inp.to_owned(); }
         print!("Querying schema");
         schema(opt.clone());
         println!("\nSchema done.");
         cli_act(AskIface, "", opt)
     },
     AskIface => {
-        println!("And finally, your network interface carrying MySQL traffic? (eth0, en0, ...) > ");
+        println!("And finally, your network interface carrying MySQL traffic? (eth0, en0, ...) [{}] ", opt.iface);
         ChkIface
     },
     ChkIface => {
-        opt.iface = inp.to_owned();
+        if inp.len() > 0 { opt.iface = inp.to_owned(); }
         cli_act(AskStart, "", opt)
     },
     AskStart => {
@@ -220,7 +229,7 @@ fn main() {
         inp.clear();
         match io::stdin().read_line(&mut inp) {
             Ok(_) => { inp.pop(); },
-            Err(e) => again(&e.to_string()),
+            Err(e) => again(&e.to_string(), &""),
         }
     }
 
