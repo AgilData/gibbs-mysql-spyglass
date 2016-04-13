@@ -17,7 +17,7 @@
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
 use ::OUT;
-use util::{COpts, mk_ascii};
+use util::{COpts, mk_ascii, read_int1, read_int2, read_int3};
 
 use std::io::Write;
 use std::net::IpAddr;
@@ -48,7 +48,7 @@ thread_local!(static STATES: RefCell<HashMap<u16, PcktState>> =
 enum MySQLState {
     Wait,
     Query { seq: u8, },
-    Columns { seq: u8, cnt: u8, },
+    Columns { seq: u8, cnt: u32, },
     Rows { seq: u8, cnt: u32, },
 }
 
@@ -68,13 +68,13 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
 
     match lst {
         MySQLState::Wait => { debug!("MySQLState::Wait");
-            if !c2s || nxt_seq != 0 || pyld[0] != 3 {
-                (MySQLState::Wait, None)
-            } else {
+            if c2s && nxt_seq == 0 && pyld[0] == 3 {
                 let qry = &pyld[1..];
                 let cr = redact.replace_all(&str::from_utf8(qry).unwrap(), "$p?");
                 print!(".");
                 (MySQLState::Query { seq: nxt_seq, }, Some(format!("STATEMENT:\n{}", cr)))
+            } else {
+                (MySQLState::Wait, None)
             }
         },
 
@@ -82,15 +82,21 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
             if c2s || nxt_seq != 1 {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
             } else {
-                let cols = pyld[0];
-                (MySQLState::Columns { seq: nxt_seq, cnt: cols, }, None)
+                match pyld[0] {
+                    0x00 | 0xfe => (MySQLState::Wait, Some(String::from("QUERY_OK"))),
+                    0xff => (MySQLState::Wait, Some(String::from("QUERY_ERROR"))),
+                    0xfc => (MySQLState::Columns { seq: nxt_seq, cnt: read_int2(&pyld[1..])}, None),
+                    0xfd => (MySQLState::Columns { seq: nxt_seq, cnt: read_int3(&pyld[1..])}, None),
+                    _ => (MySQLState::Columns { seq: nxt_seq, cnt: read_int1(&pyld[1..])}, None)
+                }
             }
         },
 
         MySQLState::Columns { seq, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
             if c2s {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
-            } else if nxt_seq < cnt + 1 {
+                //TODO: this check is incorrect
+            } else if (nxt_seq as u32) < cnt + 1 {
                 (MySQLState::Columns { seq: nxt_seq, cnt: cnt, }, None)
             } else {
                 (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None)
