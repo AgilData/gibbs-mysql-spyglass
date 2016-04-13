@@ -83,8 +83,8 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
             } else {
                 match pyld[0] {
-                    0x00 | 0xfe => (MySQLState::Wait, Some(String::from("QUERY_OK"))),
-                    0xff => (MySQLState::Wait, Some(String::from("QUERY_ERROR"))),
+                    0x00 | 0xfe => (MySQLState::Wait, Some(String::from("TYPE: QUERY_OK"))),
+                    0xff => (MySQLState::Wait, Some(String::from("TYPE: QUERY_ERROR"))),
                     0xfc => (MySQLState::Columns { seq: nxt_seq, cnt: read_int2(&pyld[1..])}, None),
                     0xfd => (MySQLState::Columns { seq: nxt_seq, cnt: read_int3(&pyld[1..])}, None),
                     _ => (MySQLState::Columns { seq: nxt_seq, cnt: read_int1(pyld)}, None)
@@ -113,7 +113,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 // the protocol version and configuration in use
                 let flg0 = if pyld.len() > 3 { pyld[3] } else { 0 };
                 let flg1 = if pyld.len() > 4 { pyld[4] } else { 0 };
-                (MySQLState::Wait, Some(format!("ROW_COUNT: {}   QUERY_SLOW: {}   NO_INDEX_USED: {}   NO_GOOD_INDEX_USED: {}",
+                (MySQLState::Wait, Some(format!("TYPE: RESULT_SET   ROW_COUNT: {}   QUERY_SLOW: {}   NO_INDEX_USED: {}   NO_GOOD_INDEX_USED: {}",
                                                 cnt, flg1 & 0x08 != 0, flg0 & 0x20 != 0, flg0 & 0x10 != 0)))
             }
         },
@@ -190,7 +190,7 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
             if out.is_some() {
                 let timespec = time::get_time();
                 let millis = timespec.sec * 1000 + timespec.nsec as i64 / 1000 / 1000;
-                let _ = writeln!(tmp, "{}", format!("-- TIMESTAMP: {}   STREAM: {}   {};", millis, strm, out.unwrap()));
+                let _ = writeln!(tmp, "{}", format!("--GIBBS TIMESTAMP: {}   STREAM: {}   {};", millis, strm, out.unwrap()));
             }
         }
         assert!(i == bs.len());
