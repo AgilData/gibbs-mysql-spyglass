@@ -85,8 +85,8 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
             } else {
                 // EOF_Packet may contain useful information on index usage depending on
                 // the protocol version and configuration in use
-                let flg0 = if pyld.len() > 2 { pyld[3] } else { 0 };
-                let flg1 = if pyld.len() > 3 { pyld[4] } else { 0 };
+                let flg0 = if pyld.len() > 3 { pyld[3] } else { 0 };
+                let flg1 = if pyld.len() > 4 { pyld[4] } else { 0 };
                 (MySQLState::Wait, Some(format!("ROW_COUNT: {}   QUERY_SLOW: {}   NO_INDEX_USED: {}   NO_GOOD_INDEX_USED: {}",
                                                 cnt, flg1 & 0x08 != 0, flg0 & 0x20 != 0, flg0 & 0x10 != 0)))
             }
