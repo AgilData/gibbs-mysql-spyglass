@@ -219,7 +219,7 @@ fn main() {
         port: 3306,
         user: "root".to_string(),
         pass: "".to_string(),
-        db: "".to_string(),
+        db: "mysql".to_string(),
         iface: "".to_string(),
         tx: None,
     };
