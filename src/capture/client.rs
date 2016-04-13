@@ -64,7 +64,7 @@ pub fn schema(opt: COpts) {
                             .map(|x| x.unwrap())
                             .fold((), |_, row| {
                                 let (_, c,): (String, String) = mysql::from_row(row);
-                                let _ = writeln!(tmp, "--GIBBS\tTYPE: DDL\tTIMESTAMP: {}\tSCHEMA: {}\tSTATEMENT:\n{};", millis, db, c);
+                                let _ = writeln!(tmp, "--GIBBS\tTYPE: DDL\tTIMESTAMP: {}\tSCHEMA: {}\tSQL:\n{};", millis, db, c);
                                 print!(".");
                             })
                         });
