@@ -50,14 +50,18 @@ pub fn schema(opt: COpts) {
                             })
                         });
 
-            let _ = pool.prep_exec(format!("select table_rows from information_schema.tables where table_name = '{}'", t), ())
+            let _ = pool.prep_exec(format!("SELECT table_rows, data_length, index_length FROM information_schema.tables WHERE table_name = '{}'", t), ())
                         .map(|res| { res
                             .map(|x| x.unwrap())
                             .fold((), |_, row| {
-                                let (c,): (u64,) = mysql::from_row(row);
-                                let _ = writeln!(tmp, "-- TIMESTAMP: {}   TABLE: {}   ROW_COUNT: {};", millis, t, c);
+                                let (row_count,data_length,index_length): (u64,u64,u64) = mysql::from_row(row);
+                                let _ = writeln!(tmp,
+                                    "-- TIMESTAMP: {}   TABLE: {}   ROW_COUNT: {}   DATA_LENGTH: {}   INDEX_LENGTH: {};",
+                                    millis, t, row_count, data_length, index_length);
                             })
                         });
+
         }
+
     });
 }
