@@ -1,6 +1,6 @@
 [package]
 name = "gibbs-mysql-spyglass"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Paul LaCrosse <paul.lacrosse@gmail.com>"]
 
 [dependencies]
