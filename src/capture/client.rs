@@ -75,7 +75,7 @@ pub fn schema(opt: COpts) {
                             .fold((), |_, row| {
                                 let (row_count,data_length,index_length): (u64,u64,u64) = mysql::from_row(row);
                                 let _ = writeln!(tmp,
-                                    "--GIBBS\tTIMESTAMP: {}\tTABLE: {}\tROW_COUNT: {}\tDATA_LENGTH: {}\tINDEX_LENGTH: {};",
+                                    "--GIBBS\tTYPE: TABLE_STATS\tTIMESTAMP: {}\tTABLE: {}\tROW_COUNT: {}\tDATA_LENGTH: {}\tINDEX_LENGTH: {};",
                                     millis, t, row_count, data_length, index_length);
                                 print!(".");
                             })
