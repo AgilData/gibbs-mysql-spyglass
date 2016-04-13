@@ -17,19 +17,21 @@
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::net::IpAddr;
+use std::sync::mpsc::Sender;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-pub static TMP_FILE: &'static str = "gibbs-capture.dat";
+pub static TMP_FILE: &'static str = "spyglass-capture.dat";
 
 #[derive(Clone, Debug)]
 pub struct COpts {
-    pub pin: u32,
+    pub key: String,
     pub host: IpAddr,
     pub port: u16,
     pub user: String,
     pub pass: String,
     pub db: String,
     pub iface: String,
+    pub tx: Option<Sender<u8>>,
 }
 
 // read a one byte length-encoded integer

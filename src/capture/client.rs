@@ -65,6 +65,7 @@ pub fn schema(opt: COpts) {
                             .fold((), |_, row| {
                                 let (_, c,): (String, String) = mysql::from_row(row);
                                 let _ = writeln!(tmp, "-- TIMESTAMP: {}   SCHEMA: {}   STATEMENT:\n{};", millis, db, c);
+                                print!(".");
                             })
                         });
 
@@ -76,6 +77,7 @@ pub fn schema(opt: COpts) {
                                 let _ = writeln!(tmp,
                                     "-- TIMESTAMP: {}   TABLE: {}   ROW_COUNT: {}   DATA_LENGTH: {}   INDEX_LENGTH: {};",
                                     millis, t, row_count, data_length, index_length);
+                                print!(".");
                             })
                         });
 

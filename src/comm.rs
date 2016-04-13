@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
-use util::{TMP_FILE, VERSION};
+use util::{TMP_FILE, VERSION, COpts};
 
 use hyper;
 
@@ -25,7 +25,7 @@ use self::multipart::client::Multipart;
 
 use std::fs::File;
 
-pub fn upload() {
+pub fn upload(opt: COpts) {
     debug!("STARTING MULTIPART UPLOAD");
     use hyper::header::{Authorization, Basic, UserAgent};
 
@@ -36,7 +36,7 @@ pub fn upload() {
     {
         let hdrs = req.headers_mut();
         hdrs.set(Authorization(Basic {
-            username: "97947bf70fecdba64c33574ad5c1c1a365bd0c30".to_owned(),
+            username: opt.key,
             password: None, }));
         hdrs.set(UserAgent(format!("AgilData/gibbs-mysql-spyglass/{}", VERSION).to_owned()));
     }

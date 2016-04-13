@@ -7,8 +7,8 @@
 .sync-config.cson
 
 target
-gibbs-capture.dat
-gibbs.log
+spyglass-capture.dat
+spyglass.log
 examples
 
 .DS_Store

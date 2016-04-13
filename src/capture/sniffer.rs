@@ -17,7 +17,7 @@
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
 use ::OUT;
-use util::{COpts, mk_ascii, read_int1, read_int2, read_int3};
+use util::{COpts, mk_ascii};
 
 use std::io::Write;
 use std::net::IpAddr;
@@ -39,10 +39,6 @@ use std::cmp;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-const MYSQL_OK_PACKET: u8 = 0x00;
-const MYSQL_COM_QUERY_PACKET: u8 = 0x03;
-const MYSQL_EOF_PACKET: u8 = 0xfe;
-const MYSQL_ERR_PACKET: u8 = 0xff;
 
 thread_local!(static STATES: RefCell<HashMap<u16, PcktState>> =
     RefCell::new(HashMap::new())
@@ -51,18 +47,18 @@ thread_local!(static STATES: RefCell<HashMap<u16, PcktState>> =
 #[derive(Clone, Debug)]
 enum MySQLState {
     Wait,
-    Query { seq: u32, },
-    Columns { seq: u32, cnt: u32, },
-    Rows { seq: u32, cnt: u32, },
+    Query { seq: u8, },
+    Columns { seq: u8, cnt: u8, },
+    Rows { seq: u8, cnt: u32, },
 }
 
 #[derive(Clone, Debug)]
 enum PcktState {
     Start { lst: MySQLState, },
-    Frag { need: usize, part: Vec<u8>, seq: u32, lst: MySQLState, },
+    Frag { need: usize, part: Vec<u8>, seq: u8, lst: MySQLState, },
 }
 
-fn state_act(c2s: bool, nxt_seq: u32, lst: MySQLState, pyld: &[u8]) -> (MySQLState, Option<String>) {
+fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLState, Option<String>) {
     debug!("state_act: c2s={:?}, nxt_seq={:?}, lst={:?}, pyld={:?}", c2s, nxt_seq, lst, pyld);
     let redact = regex!(r#"(?x)( (?P<p>[\s=\(\+-/\*]) (
                             '[^'\\]*((\\.|'')[^'\\]*)*' |
@@ -72,12 +68,13 @@ fn state_act(c2s: bool, nxt_seq: u32, lst: MySQLState, pyld: &[u8]) -> (MySQLSta
 
     match lst {
         MySQLState::Wait => { debug!("MySQLState::Wait");
-            if c2s && nxt_seq == 0 && pyld[0] == MYSQL_COM_QUERY_PACKET {
+            if !c2s || nxt_seq != 0 || pyld[0] != 3 {
+                (MySQLState::Wait, None)
+            } else {
                 let qry = &pyld[1..];
                 let cr = redact.replace_all(&str::from_utf8(qry).unwrap(), "$p?");
+                print!(".");
                 (MySQLState::Query { seq: nxt_seq, }, Some(format!("STATEMENT:\n{}", cr)))
-            } else {
-                (MySQLState::Wait, None)
             }
         },
 
@@ -85,13 +82,8 @@ fn state_act(c2s: bool, nxt_seq: u32, lst: MySQLState, pyld: &[u8]) -> (MySQLSta
             if c2s || nxt_seq != 1 {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
             } else {
-                match pyld[0] {
-                    MYSQL_OK_PACKET | MYSQL_EOF_PACKET => (MySQLState::Wait, Some(String::from("QUERY_OK"))),
-                    MYSQL_ERR_PACKET => (MySQLState::Wait, Some(String::from("QUERY_ERROR"))),
-                    0xfc => (MySQLState::Columns { seq: nxt_seq, cnt: read_int2(&pyld[1..])}, None),
-                    0xfd => (MySQLState::Columns { seq: nxt_seq, cnt: read_int3(&pyld[1..])}, None),
-                    _ => (MySQLState::Columns { seq: nxt_seq, cnt: read_int1(&pyld[1..])}, None)
-                }
+                let cols = pyld[0];
+                (MySQLState::Columns { seq: nxt_seq, cnt: cols, }, None)
             }
         },
 
@@ -131,9 +123,9 @@ fn mysql_frag(need: usize, bs: &[u8]) -> (usize, usize, &[u8]) {
     (used, need, pyld)
 }
 
-fn mysql_next(bs: &[u8]) -> (usize, usize, u32, &[u8]) {
+fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
     let len: usize = (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16);
-    let seq: u32 = bs[3] as u32;
+    let seq: u8 = bs[3];
     let used = cmp::min(4 + len, bs.len());
     let pyld = &bs[4..used];
     let need = len + 4 - used;

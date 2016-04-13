@@ -17,18 +17,15 @@
 # along with Gibbs MySQL Spyglass.  If not, see <http:#www.gnu.org/licenses/>.
 
 [package]
-name = "gibbs-mysql-spyglass"
-version = "0.5.2"
+name = "spyglass"
+version = "0.6.0"
 authors = ["Paul LaCrosse <paul.lacrosse@gmail.com>"]
 
 [dependencies]
 pnet = "0.8.1"
 mysql = { version = "*", default-features = false, features = ["socket"] }
-nickel = { version = "*", git = "https://github.com/nickel-org/nickel.rs.git", features = ["unstable"] }
 hyper = { version = "0.7.2", default-features = false, features = ["nightly"] }
 multipart = { version = "*", git = "https://github.com/cybergeek94/multipart.git", default-features = false, features = ["client", "hyper"] }
-argparse = "*"
-rand = "*"
 time = "*"
 regex = "*"
 regex_macros = "*"
