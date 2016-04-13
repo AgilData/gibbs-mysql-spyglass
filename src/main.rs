@@ -191,7 +191,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         if inp.len() == 0 || inp.to_string().to_uppercase() == "Y" {
             print!("Sending...");
             upload(opt.clone());
-            println!(".done!");
+            println!(".done! Press enter to complete.");
         }
         Quit
     },
