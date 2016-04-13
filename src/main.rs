@@ -213,6 +213,7 @@ fn main() {
 
     let mut st: CLIState = Welcome;
     let mut inp = String::new();
+    // TODO: initialize below by reading saved values from prior run
     let mut opt = COpts {
         key: "".to_string(),
         host: IpAddr::V4(Ipv4Addr::new(0,0,0,0)),
@@ -220,7 +221,7 @@ fn main() {
         user: "root".to_string(),
         pass: "".to_string(),
         db: "mysql".to_string(),
-        iface: "".to_string(),
+        iface: "eth0".to_string(),
         tx: None,
     };
 
