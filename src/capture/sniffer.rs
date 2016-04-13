@@ -87,7 +87,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                     0xff => (MySQLState::Wait, Some(String::from("QUERY_ERROR"))),
                     0xfc => (MySQLState::Columns { seq: nxt_seq, cnt: read_int2(&pyld[1..])}, None),
                     0xfd => (MySQLState::Columns { seq: nxt_seq, cnt: read_int3(&pyld[1..])}, None),
-                    _ => (MySQLState::Columns { seq: nxt_seq, cnt: read_int1(&pyld[1..])}, None)
+                    _ => (MySQLState::Columns { seq: nxt_seq, cnt: read_int1(pyld)}, None)
                 }
             }
         },
