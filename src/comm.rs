@@ -31,7 +31,7 @@ pub fn upload(opt: COpts) {
 
     let mut req = hyper::client::request::Request::new(
         hyper::method::Method::Post,
-        hyper::Url::parse("https://mysql-analyzer.agildata.com/api/analyses").unwrap()
+        hyper::Url::parse("https://gibbs.agildata.com/api/analyses").unwrap()
     ).unwrap();
     {
         let hdrs = req.headers_mut();
