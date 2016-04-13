@@ -43,19 +43,15 @@ pub fn read_int1(pyld: &[u8]) -> u32 {
 
 // read a two byte length-encoded integer
 pub fn read_int2(pyld: &[u8]) -> u32 {
-    let n: usize =
-        (pyld[0] as usize) +
-        ((pyld[1] as usize) << 8);
-    n as u32
+    (pyld[0] as u32) +
+    ((pyld[1] as u32) << 8)
 }
 
 // read a three byte length-encoded integer
 pub fn read_int3(pyld: &[u8]) -> u32 {
-    let n: usize =
-        (pyld[0] as usize) +
-        ((pyld[1] as usize) << 8) +
-        ((pyld[2] as usize) << 16);
-    n as u32
+    (pyld[0] as u32) +
+    ((pyld[1] as u32) << 8) +
+    ((pyld[2] as u32) << 16)
 }
 
 // read an eight byte length-encoded integer
