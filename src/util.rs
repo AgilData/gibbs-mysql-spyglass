@@ -16,6 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
+#![allow(dead_code)]
+
 use std::net::IpAddr;
 use std::sync::mpsc::Sender;
 
@@ -57,21 +59,17 @@ pub fn read_int3(pyld: &[u8]) -> u32 {
 }
 
 // read an eight byte length-encoded integer
-#[allow(dead_code)]
 pub fn read_int8(pyld: &[u8]) -> u64 {
-    let n: usize =
-        (pyld[0] as usize) +
-        ((pyld[1] as usize) << 8) +
-        ((pyld[2] as usize) << 16) +
-        ((pyld[3] as usize) << 24) +
-        ((pyld[4] as usize) << 32) +
-        ((pyld[5] as usize) << 40) +
-        ((pyld[6] as usize) << 48) +
-        ((pyld[7] as usize) << 56);
-    n as u64
+        (pyld[0] as u64) +
+        ((pyld[1] as u64) << 8) +
+        ((pyld[2] as u64) << 16) +
+        ((pyld[3] as u64) << 24) +
+        ((pyld[4] as u64) << 32) +
+        ((pyld[5] as u64) << 40) +
+        ((pyld[6] as u64) << 48) +
+        ((pyld[7] as u64) << 56)
 }
 
-#[allow(dead_code)]
 pub fn mk_ascii(arr: &[u8]) -> String {
 let ascii: Vec<u8> = arr.iter()
                         .map(|b| match *b {
