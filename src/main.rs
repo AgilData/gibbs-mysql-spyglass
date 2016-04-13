@@ -169,7 +169,6 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         ChkStart
     },
     ChkStart => {
-        opt.iface = inp.to_owned();
         cli_act(AskStop, "", opt)
     },
     AskStop => {

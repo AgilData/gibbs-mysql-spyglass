@@ -199,12 +199,12 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
     }); });
 }
 
-fn tcp_pckt(iname: &str, source: IpAddr, destination: IpAddr, packet: &[u8], opt: &COpts) {
+fn tcp_pckt(iname: &str, src: IpAddr, dst: IpAddr, packet: &[u8], opt: &COpts) {
     let udp = UdpPacket::new(packet);  // use UDP packet since parts we use in same place
     if let Some(udp) = udp {
-        if source == opt.host && udp.get_source() == opt.port {  // server -> client
+        if src == opt.host && udp.get_source() == opt.port {  // server -> client
             tcp_pyld(false, udp.get_destination(), &packet[(packet[12] >> 4) as usize * 4..]);
-        } else if destination == opt.host && udp.get_destination() == opt.port {  // client -> server
+        } else if dst == opt.host && udp.get_destination() == opt.port {  // client -> server
             tcp_pyld(true, udp.get_source(), &packet[(packet[12] >> 4) as usize * 4..]);
         }
     } else {
@@ -243,7 +243,14 @@ fn process_pckt(iname: &str, ether: &EthernetPacket, opt: &COpts) {
 pub fn sniff(opt: COpts) {
     let name_cmp = |iface: &NetworkInterface| iface.name == opt.iface;
     let ifaces = get_network_interfaces();
-    let iface = ifaces.into_iter().filter(name_cmp).next().unwrap();
+
+    let iface = match ifaces.into_iter().filter(name_cmp).next() {
+        Some(f) => f,
+        None => {
+            println!("didn't find the '{}' network interface", opt.iface);
+            return;
+        },
+    };
 
     let (_, mut rx) = match datalink_channel(&iface, 0, 4096, Layer2) {
         Ok((tx, rx)) => (tx, rx),
