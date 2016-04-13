@@ -188,7 +188,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         ChkSend
     },
     ChkSend => {
-        if true { //inp.len() == 1 || inp[0] == ascii y or ascii Y
+        if inp.len() == 0 || inp.to_string().to_uppercase() == "Y" {
             print!("Sending...");
             upload(opt.clone());
             println!(".done!");
