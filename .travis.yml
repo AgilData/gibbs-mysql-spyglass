@@ -22,6 +22,7 @@ matrix:
             - libssl
             - libssl-dev  
             - pkg-config
+            - gcc-multilib
     - os: osx
       env: TARGET=x86_64-apple-darwin CHANNEL=nightly
     - os: linux
@@ -32,6 +33,7 @@ matrix:
             - libssl
             - libssl-dev  
             - pkg-config
+            - gcc-multilib
     - os: linux
       env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
@@ -40,6 +42,7 @@ matrix:
             - libssl
             - libssl-dev  
             - pkg-config
+            - gcc-multilib
       
 
 install:
