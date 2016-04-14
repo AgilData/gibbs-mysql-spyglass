@@ -48,7 +48,7 @@ thread_local!(static STATES: RefCell<HashMap<u16, PcktState>> =
 enum MySQLState {
     Wait,
     Query { seq: u8, },
-    Columns { seq: u8, cnt: u32, },
+    Columns { seq: u8, num: u32, cnt: u32, },
     Rows { seq: u8, cnt: u32, },
 }
 
@@ -86,19 +86,19 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 match pyld[0] {
                     0x00 | 0xfe => (MySQLState::Wait, Some(String::from("TYPE: QUERY_OK"))),
                     0xff => (MySQLState::Wait, Some(String::from("TYPE: QUERY_ERROR"))),
-                    0xfc => (MySQLState::Columns { seq: nxt_seq, cnt: read_int2(&pyld[1..])}, None),
-                    0xfd => (MySQLState::Columns { seq: nxt_seq, cnt: read_int3(&pyld[1..])}, None),
-                    _ => (MySQLState::Columns { seq: nxt_seq, cnt: read_int1(pyld)}, None)
+                    0xfc => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int2(&pyld[1..])}, None),
+                    0xfd => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int3(&pyld[1..])}, None),
+                    _ => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int1(pyld)}, None)
                 }
             }
         },
 
-        MySQLState::Columns { seq, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
+        MySQLState::Columns { seq, num, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
             if c2s {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
                 //TODO: this check is incorrect
-            } else if (nxt_seq as u32) < cnt + 1 {
-                (MySQLState::Columns { seq: nxt_seq, cnt: cnt, }, None)
+            } else if (num < cnt) {
+                (MySQLState::Columns { seq: nxt_seq, num: num + 1, cnt: cnt, }, None)
             } else {
                 (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None)
             }
