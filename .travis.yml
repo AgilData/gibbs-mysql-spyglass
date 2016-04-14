@@ -14,7 +14,7 @@ matrix:
     - os: osx
       env: TARGET=i686-apple-darwin CHANNEL=nightly
     - os: linux
-      env: TARGET=i686-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/
+      env: TARGET=i686-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
         apt:
           packages: 
@@ -25,7 +25,7 @@ matrix:
     - os: osx
       env: TARGET=x86_64-apple-darwin CHANNEL=nightly
     - os: linux
-      env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/
+      env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
         apt:
           packages: 
@@ -33,7 +33,7 @@ matrix:
             - libssl-dev  
             - pkg-config
     - os: linux
-      env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/
+      env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
         apt:
           packages: 
@@ -44,7 +44,6 @@ matrix:
 
 install:
   - export PATH="$PATH:$HOME/.cargo/bin"
-  - find / -name *ssl*.h*
   - bash ci/install.sh
 
 script:
