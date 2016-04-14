@@ -215,9 +215,11 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
             Some(mss) => mss.clone(),
             None => if c2s { PcktState::Start { lst: MySQLState::Wait, } } else { return; },
         };
+        debug!("tcp_pyld: strm={:?}, before_loop", strm);
         while i < bs.len() {
+            debug!("tcp_pyld: strm={:?}, i={:?}, bs.len()={:?}", strm, i, bs.len());
             let (used, nxt, out) = nxt_state(c2s, st, &bs[i..]);
-            debug!("tcp_pyld: used={:?}, nxt={:?}, out={:?}", used, nxt, out);
+            debug!("tcp_pyld: strm={:?}, used={:?}, nxt={:?}, out={:?}", strm, used, nxt, out);
             i += used;
             st = nxt;
             if out.is_some() {
@@ -226,6 +228,7 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
                 let _ = writeln!(tmp, "{}", format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};", millis, strm, out.unwrap()));
             }
         }
+        debug!("tcp_pyld: strm={:?}, after_loop", strm);
         assert!(i == bs.len());
 
         hm.insert(strm, st);  // ending state
