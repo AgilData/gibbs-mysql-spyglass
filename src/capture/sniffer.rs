@@ -247,6 +247,7 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
                 let timespec = time::get_time();
                 let millis = timespec.sec * 1000 + timespec.nsec as i64 / 1000 / 1000;
                 let _ = writeln!(tmp, "{}", format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};", millis, strm, out.unwrap()));
+                tmp.flush();
             }
         }
         debug!("tcp_pyld: strm={:?}, after_loop", strm);
