@@ -159,7 +159,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                         // partial header for MySQL packet
                         let mut v: Vec<u8> = Vec::new();
                         v.extend_from_slice(bs);
-                        (bs.len(), PcktState::Frag { header: true, need: 0, part: v, seq: 0, lst: lst }, None)
+                        (bs.len(), PcktState::Frag { header: true, need: 4 - part.len(), part: v, seq: 0, lst: lst }, None)
 
                     },
                     _ => {
@@ -185,7 +185,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                     match part.len() {
                         0 ... 3 => {
                             // still a partial header
-                            (bs.len(), PcktState::Frag { header: true, need: 0, part: part, seq: 0, lst: lst }, None)
+                            (bs.len(), PcktState::Frag { header: true, need: 4 - part.len(), part: part, seq: 0, lst: lst }, None)
                         },
                         _ => {
                             let mut x: Vec<u8> = Vec::new();
