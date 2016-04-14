@@ -4,9 +4,7 @@ Ahoy Matey! My name is Gibbs. I’m here to help you scale your MySQL database. 
 
 It’s quite simple. Just download Spyglass, my database traffic analyzer, to your app server and we’ll do all the analysis automatically. We’ll collect some data, and then create a custom report for your app.
 
-[![](https://img.shields.io/badge/License-GPL3-green.svg)](https://github.com/agildata/gibbs-mysql-spyglass/blob/master/LICENSE)
-
-[![Build Status](https://travis-ci.org/AgilData/gibbs-mysql-spyglass.svg?branch=master)](https://travis-ci.org/AgilData/gibbs-mysql-spyglass)
+[![Build Status](https://travis-ci.org/AgilData/gibbs-mysql-spyglass.svg?branch=master)](https://travis-ci.org/AgilData/gibbs-mysql-spyglass)  [![](https://img.shields.io/badge/License-GPL3-green.svg)](https://github.com/agildata/gibbs-mysql-spyglass/blob/master/LICENSE.TXT)
 
 |i686-apple-darwin|i686-unknown-linux-gnu|x86_64-apple-darwin|x86_64-unknown-linux-gnu|x86_64-unknown-linux-musl|
 |:---------------:|:--------------------:|:-----------------:|:----------------------:|:-----------------------:|
