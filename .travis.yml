@@ -5,6 +5,7 @@ language: generic
 cache:
   directories:
   - $HOME/.cargo
+  - target/$TARGET
 
 env:
   global:
