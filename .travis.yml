@@ -1,5 +1,9 @@
 language: generic
 
+cache:
+  directories:
+  - $HOME/.cargo
+
 env:
   global:
     # This will be part of the release tarball
