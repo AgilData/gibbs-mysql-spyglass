@@ -56,6 +56,7 @@ enum MySQLState {
 enum PcktState {
     Start { lst: MySQLState, },
     Frag { need: usize, part: Vec<u8>, seq: u8, lst: MySQLState, },
+    HeaderFrag { need: usize, part: Vec<u8>, lst: MySQLState, },
 }
 
 fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLState, Option<String>) {
@@ -152,17 +153,42 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
         PcktState::Start { lst, } => { debug!("PcktState::Start {{ {:?} }}", lst);
             match lst {
                 MySQLState::Wait if !c2s => (bs.len(), PcktState::Start { lst: lst, }, None),
-                _ => {
-                    let (used, need, seq, pyld) = mysql_next(bs);
-                    if need == 0 {
-                        let (nxt, out) = state_act(c2s, seq, lst, pyld);
-                        (used, PcktState::Start { lst: nxt, }, out)
-                    } else {
+                _ => match bs.len() {
+                    0 ... 3 => {
                         let mut v: Vec<u8> = Vec::new();
-                        v.extend_from_slice(pyld);
-                        (used, PcktState::Frag { need: need, part: v, seq: seq, lst: lst }, None)
+                        v.extend_from_slice(bs);
+                        (0, PcktState::HeaderFrag { need: 4 - bs.len(), part: v, lst: lst }, None)
+                    },
+                    _ => {
+                        let (used, need, seq, pyld) = mysql_next(bs);
+                        if need == 0 {
+                            let (nxt, out) = state_act(c2s, seq, lst, pyld);
+                            (used, PcktState::Start { lst: nxt, }, out)
+                        } else {
+                            let mut v: Vec<u8> = Vec::new();
+                            v.extend_from_slice(bs);
+                            (used, PcktState::Frag { need: need, part: v, seq: seq, lst: lst }, None)
+                        }
                     }
                 },
+            }
+        },
+
+        PcktState::HeaderFrag { need, mut part, lst } => { debug!("PcktState::HeaderFrag {{ {:?}, {:?}, {:?} }}", need, part, lst);
+            if need < bs.len() {
+                part.extend_from_slice(&bs[0..need]);
+                let (used, need, seq, pyld) = mysql_next(bs);
+                if need == 0 {
+                    let (nxt, out) = state_act(c2s, seq, lst, pyld);
+                    (used, PcktState::Start { lst: nxt, }, out)
+                } else {
+                    let mut v: Vec<u8> = Vec::new();
+                    v.extend_from_slice(pyld);
+                    (used, PcktState::Frag { need: need, part: v, seq: seq, lst: lst }, None)
+                }
+            } else {
+                part.extend_from_slice(bs);
+                (0, PcktState::HeaderFrag { need: 4 - part.len(), part: part, lst: lst }, None)
             }
         },
 
