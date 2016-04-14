@@ -13,29 +13,10 @@ matrix:
     # Nightly channel
     - os: osx
       env: TARGET=i686-apple-darwin CHANNEL=nightly
-    - os: linux
-      env: TARGET=i686-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
-      addons:
-        apt:
-          packages: 
-            - *i686_unknown_linux_gnu
-            - libssl
-            - libssl-dev  
-            - pkg-config
-            - gcc-multilib
     - os: osx
       env: TARGET=x86_64-apple-darwin CHANNEL=nightly
     - os: linux
-      env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
-      addons:
-        apt:
-          packages: 
-            - libssl
-            - libssl-dev  
-            - pkg-config
-            - gcc-multilib
-    - os: linux
-      env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
+      env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
         apt:
           packages: 
