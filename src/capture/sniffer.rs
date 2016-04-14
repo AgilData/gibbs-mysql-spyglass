@@ -48,7 +48,7 @@ thread_local!(static STATES: RefCell<HashMap<u16, PcktState>> =
 enum MySQLState {
     Wait,
     Query { seq: u8, },
-    Columns { seq: u8, cnt: u32, },
+    Columns { seq: u8, num: u32, cnt: u32, },
     Rows { seq: u8, cnt: u32, },
 }
 
@@ -85,19 +85,19 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 match pyld[0] {
                     0x00 | 0xfe => (MySQLState::Wait, Some(String::from("TYPE: QUERY_OK"))),
                     0xff => (MySQLState::Wait, Some(String::from("TYPE: QUERY_ERROR"))),
-                    0xfc => (MySQLState::Columns { seq: nxt_seq, cnt: read_int2(&pyld[1..])}, None),
-                    0xfd => (MySQLState::Columns { seq: nxt_seq, cnt: read_int3(&pyld[1..])}, None),
-                    _ => (MySQLState::Columns { seq: nxt_seq, cnt: read_int1(pyld)}, None)
+                    0xfc => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int2(&pyld[1..])}, None),
+                    0xfd => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int3(&pyld[1..])}, None),
+                    _ => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int1(pyld)}, None)
                 }
             }
         },
 
-        MySQLState::Columns { seq, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
+        MySQLState::Columns { seq, num, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
             if c2s {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
                 //TODO: this check is incorrect
-            } else if (nxt_seq as u32) < cnt + 1 {
-                (MySQLState::Columns { seq: nxt_seq, cnt: cnt, }, None)
+            } else if num < cnt {
+                (MySQLState::Columns { seq: nxt_seq, num: num + 1, cnt: cnt, }, None)
             } else {
                 (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None)
             }
@@ -137,13 +137,23 @@ fn mysql_frag(need: usize, bs: &[u8]) -> (usize, usize, &[u8]) {
 }
 
 fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
-    let len: usize = (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16);
-    let seq: u8 = bs[3];
-    let used = cmp::min(4 + len, bs.len());
-    let pyld = &bs[4..used];
-    let need = len + 4 - used;
-
-    (used, need, seq, pyld)
+    match bs.len() {
+        0 ... 3 => {
+            // not enough bytes to know how many bytes we need beyond the header
+            let used = bs.len();
+            let need = 4 - used;
+            let pyld = &bs[0..used];
+            (used, need, 0, pyld)
+        },
+        _ => {
+            let len: usize = (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16);
+            let seq: u8 = bs[3];
+            let used = cmp::min(4 + len, bs.len());
+            let pyld = &bs[0..used];
+            let need = len + 4 - used;
+            (used, need, seq, pyld)
+        }
+    }
 }
 
 fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<String>) {
@@ -155,7 +165,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                 _ => {
                     let (used, need, seq, pyld) = mysql_next(bs);
                     if need == 0 {
-                        let (nxt, out) = state_act(c2s, seq, lst, pyld);
+                        let (nxt, out) = state_act(c2s, seq, lst, &pyld[4..]);
                         (used, PcktState::Start { lst: nxt, }, out)
                     } else {
                         let mut v: Vec<u8> = Vec::new();
@@ -170,7 +180,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
             let (used, need, pyld) = mysql_frag(need, bs);
             part.extend_from_slice(pyld);
             if need == 0 {
-                let (nxt, out) = state_act(c2s, seq, lst, &part[..]);
+                let (nxt, out) = state_act(c2s, seq, lst, &part[4..]);
                 (used, PcktState::Start { lst: nxt, }, out)
             } else {
                 (used, PcktState::Frag { need: need, part: part, seq: seq, lst: lst }, None)
@@ -181,6 +191,12 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
 }
 
 fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
+
+    if bs.len() == 0 {
+        // ignore empty packets
+        return;
+    }
+
     debug!("tcp_pyld: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
 
     STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut tmp = f.borrow_mut();
@@ -189,6 +205,7 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
             Some(mss) => mss.clone(),
             None => if c2s { PcktState::Start { lst: MySQLState::Wait, } } else { return; },
         };
+        debug!("tcp_pyld: begin");
         while i < bs.len() {
             let (used, nxt, out) = nxt_state(c2s, st, &bs[i..]);
             debug!("tcp_pyld: used={:?}, nxt={:?}, out={:?}", used, nxt, out);
@@ -200,6 +217,7 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
                 let _ = writeln!(tmp, "{}", format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};", millis, strm, out.unwrap()));
             }
         }
+        debug!("tcp_pyld: end");
         assert!(i == bs.len());
 
         hm.insert(strm, st);  // ending state
