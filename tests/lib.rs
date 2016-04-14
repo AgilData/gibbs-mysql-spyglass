@@ -1,11 +1,9 @@
 #[macro_use]
 extern crate log;
 extern crate log4rs;
+extern crate mysql;
 
-// extern crate mysql;
-//
-// use self::mysql::*;
-
+use mysql::{Pool, Opts};
 
 #[cfg(test)]
 mod tests {
@@ -26,16 +24,16 @@ mod tests {
         debug!("DDL: {:?}", ddl);
     }
 
-    // fn connect() -> mysql::Pool {
-    //     let db = opt.db.clone().into_boxed_str();
-    //     let my_opts = Opts {
-    //         ip_or_hostname: Some(String::from("1.2.3.4")),
-    //         tcp_port: 3306,
-    //         user: Some(String::from("user")),
-    //         pass: Some(String::from("pass")),
-    //         db_name: Some(String::from("db")),
-    //         ..Default::default()
-    //     };
-    //     let pool = mysql::Pool::new(my_opts).unwrap();
-    // }
+    fn connect() -> mysql::Pool {
+        let my_opts = Opts {
+            ip_or_hostname: Some(String::from("1.2.3.4")),
+            tcp_port: 3306,
+            user: Some(String::from("user")),
+            pass: Some(String::from("pass")),
+            db_name: Some(String::from("db")),
+            ..Default::default()
+        };
+        let pool = mysql::Pool::new(my_opts).unwrap();
+        pool
+    }
 }
