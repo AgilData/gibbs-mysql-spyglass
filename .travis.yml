@@ -1,0 +1,74 @@
+language: generic
+
+env:
+  global:
+    # This will be part of the release tarball
+    - PROJECT_NAME=gibbs-mysql-spyglass
+
+# AFAICT There are a few ways to set up the build jobs. This one is not the DRYest but I feel is the
+# easiest to reason about.
+# NOTE Make *sure* you don't remove a reference (&foo) if you are going to dereference it (*foo)
+matrix:
+  include:
+    # Nightly channel
+    - os: linux
+      env: TARGET=armv7-unknown-linux-gnueabihf CHANNEL=nightly
+      sudo: required
+      addons:
+        apt:
+          # Use the same packages the stable version uses
+          packages: *armv7_unknown_linux_gnueabihf
+    - os: osx
+      env: TARGET=i686-apple-darwin CHANNEL=nightly
+    - os: linux
+      env: TARGET=i686-unknown-linux-gnu CHANNEL=nightly
+      addons:
+        apt:
+          packages: *i686_unknown_linux_gnu
+    - os: osx
+      env: TARGET=x86_64-apple-darwin CHANNEL=nightly
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly
+
+install:
+  - export PATH="$PATH:$HOME/.cargo/bin"
+  - bash ci/install.sh
+
+script:
+  - bash ci/script.sh
+
+before_deploy:
+  - bash ci/before_deploy.sh
+
+deploy:
+  provider: releases
+  # - Go to 'https://github.com/settings/tokens/new' and generate a Token with only the
+  # `public_repo` scope enabled
+  # - Call `travis encrypt $github_token` where $github_token is the token you got in the previous
+  # step and `travis` is the official Travis CI gem (see https://rubygems.org/gems/travis/)
+  # - Enter the "encrypted value" below
+  api_key:
+      secure: H6tmc0kFSM1hR0hZh016PzFvBiquOqgDCJYlEprnDp/s96ojBb9FUhQWbG7TclzDKT1z7F1RxA+WT4Lp0Fe7VH8/t0EO/C9jxmZCPleNWjIIhQWqRtNOYbXFN+v84c32Y0lNwpJFCrqr596p5juHygmN5LS17itFWXhm2nof5zy5p9YTs6Wc7x0h8MONFeIULXMVUAF84x8QSN1MlqlhPYlPAzlkFQSzgYyJZQXUwnKeP2Ur0G61fy2vrHXNMajFUOsdHrtCuDUUFARIc7Pi1s/COvIuE+cx1fNvHFD5wVd5bk+RKUkKJw6jz6+aOOF+rfjkNTx/IfgexF21xoQKvfIO8GSqD/4FOPd002frBD0WStVekOjvJOIEVztGoEmORgeXCyZPWlFHuxmcsw5Tp7oi7UHZ0ao7vWfsQ8QaoNDS7kpHneqFwTn+dqII1vxmb2nscxjeIqK3fFDe92Ful3v/njFHSs4/Qd6ujGy3/x1bXz+faG6uaUBXJ1uwiBVCN4g8dqg4eVga5DR9Y+hfwPAWPJLciX2WuaDseF+AnteCgLE28lrwOfdx+CuykXBUwuUKIUhAG8oDOgGGaddv8C/TvVEdejVIsiIJzQPgd/yZP3n2fhGQitPPLV9p7KtbzU9Pe+Y23QOsKHTgZaboiueTh+4mOdmZ/7uQfH0xuOI=
+  file: ${PROJECT_NAME}-${TRAVIS_TAG}-${TARGET}.tar.gz
+  # don't delete the artifacts from previous phases
+  skip_cleanup: true
+  # deploy when a new tag is pushed
+  on:
+    # channel to use to produce the release artifacts
+    # NOTE make sure you only release *once* per target
+    condition: $CHANNEL = nightly
+    tags: true
+
+branches:
+  only:
+    # Pushes and PR to the master branch
+    - master
+    # IMPORTANT Ruby regex to match tags. Required, or travis won't trigger deploys when a new tag
+    # is pushed. This regex matches semantic versions like v1.2.3-rc4+2016.02.22
+    - /^v\d+\.\d+\.\d+.*$/
+
+notifications:
+  email:
+    on_success: never

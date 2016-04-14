@@ -14,3 +14,6 @@ examples
 .idea
 
 .DS_Store
+
+# TravisCI
+*travis.log
