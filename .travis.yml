@@ -21,6 +21,7 @@ matrix:
             - *i686_unknown_linux_gnu
             - libssl
             - libssl-dev  
+            - pkg-config
     - os: osx
       env: TARGET=x86_64-apple-darwin CHANNEL=nightly
     - os: linux
@@ -30,6 +31,7 @@ matrix:
           packages: 
             - libssl
             - libssl-dev  
+            - pkg-config
     - os: linux
       env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly
       addons:
@@ -37,6 +39,7 @@ matrix:
           packages: 
             - libssl
             - libssl-dev  
+            - pkg-config
       
 
 install:
