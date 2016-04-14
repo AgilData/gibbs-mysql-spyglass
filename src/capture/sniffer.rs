@@ -94,10 +94,10 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
         },
 
         MySQLState::Columns { seq, num, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
-            if c2s {
+            /*if c2s && pyld[0] == 0x03 {
+                // new u=query was issued so ignore current results
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
-                //TODO: this check is incorrect
-            } else if (num < cnt) {
+            } else*/ if num < cnt {
                 (MySQLState::Columns { seq: nxt_seq, num: num + 1, cnt: cnt, }, None)
             } else {
                 (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None)
@@ -105,9 +105,9 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
         },
 
         MySQLState::Rows { seq, cnt, } => { debug!("MySQLState::Rows {{ {:?}, {:?} }}", seq, cnt);
-            if c2s {
+            /*if c2s {
                 state_act(c2s, seq, MySQLState::Wait, pyld)
-            } else {
+            } else*/ {
                 match pyld[0] {
                     0x00 =>
                         // As of MySQL 5.7.5, OK packes are also used to indicate EOF, and EOF packets are deprecated.
@@ -148,7 +148,7 @@ fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
 }
 
 fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<String>) {
-    debug!("nxt_state c2s={:?}, bs={:?}, ", c2s, bs);
+    debug!("nxt_state c2s={:?}, bs.len()={:?}, bs={:?}, ", c2s, bs.len(), bs);
     match st {
         PcktState::Start { lst, } => { debug!("PcktState::Start {{ {:?} }}", lst);
             match lst {
@@ -182,13 +182,13 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                 let (used, need, seq, pyld) = mysql_next(&v);
                 if need == 0 {
                     let (nxt, out) = state_act(c2s, seq, lst, pyld);
-                    (used, PcktState::Start { lst: nxt, }, out)
+                    (used - part.len(), PcktState::Start { lst: nxt, }, out)
                 } else {
-                    (used, PcktState::Frag { need: need, part: part, seq: seq, lst: lst }, None)
+                    (used - part.len(), PcktState::Frag { need: need, part: part, seq: seq, lst: lst }, None)
                 }
             } else {
                 part.extend_from_slice(bs);
-                (0, PcktState::HeaderFrag { need: 4 - part.len(), part: part, lst: lst }, None)
+                (bs.len(), PcktState::HeaderFrag { need: 4 - part.len(), part: part, lst: lst }, None)
             }
         },
 
