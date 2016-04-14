@@ -48,7 +48,7 @@ run_test_suite() {
   cargo test --release --target $TARGET
 
   # sanity check the file type
-  file target/$TARGET/debug/hello
+  file target/$TARGET/release/spyglass
 }
 
 main() {
