@@ -55,8 +55,7 @@ enum MySQLState {
 #[derive(Clone, Debug)]
 enum PcktState {
     Start { lst: MySQLState, },
-    Frag { need: usize, part: Vec<u8>, seq: u8, lst: MySQLState, },
-    HeaderFrag { need: usize, part: Vec<u8>, lst: MySQLState, },
+    Frag { header: bool, need: usize, part: Vec<u8>, seq: u8, lst: MySQLState, },
 }
 
 fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLState, Option<String>) {
@@ -140,6 +139,7 @@ fn mysql_frag(need: usize, bs: &[u8]) -> (usize, usize, &[u8]) {
 fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
     let len: usize = (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16);
     let seq: u8 = bs[3];
+    debug!("mysql_next() size={:?}, seq={:?}", len, seq);
     let used = cmp::min(4 + len, bs.len());
     let pyld = &bs[4..used];
     let need = len + 4 - used;
@@ -150,14 +150,17 @@ fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
 fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<String>) {
     debug!("nxt_state c2s={:?}, bs.len()={:?}, bs={:?}, ", c2s, bs.len(), bs);
     match st {
-        PcktState::Start { lst, } => { debug!("PcktState::Start {{ {:?} }}", lst);
+        PcktState::Start { lst, } => {
+            debug!("PcktState::Start {{ {:?} }}", lst);
             match lst {
                 MySQLState::Wait if !c2s => (bs.len(), PcktState::Start { lst: lst, }, None),
                 _ => match bs.len() {
                     0 ... 3 => {
+                        // partial header for MySQL packet
                         let mut v: Vec<u8> = Vec::new();
                         v.extend_from_slice(bs);
-                        (bs.len(), PcktState::HeaderFrag { need: 4 - bs.len(), part: v, lst: lst }, None)
+                        (bs.len(), PcktState::Frag { header: true, need: 0, part: v, seq: 0, lst: lst }, None)
+
                     },
                     _ => {
                         let (used, need, seq, pyld) = mysql_next(bs);
@@ -167,39 +170,50 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                         } else {
                             let mut v: Vec<u8> = Vec::new();
                             v.extend_from_slice(bs);
-                            (used, PcktState::Frag { need: need, part: v, seq: seq, lst: lst }, None)
+                            (used, PcktState::Frag { header: false, need: need, part: v, seq: seq, lst: lst }, None)
                         }
                     }
                 },
             }
         },
 
-        PcktState::HeaderFrag { need, mut part, lst } => { debug!("PcktState::HeaderFrag {{ {:?}, {:?}, {:?} }}", need, part, lst);
-            if need < bs.len() {
-                let mut v: Vec<u8> = Vec::new();
-                v.extend_from_slice(&part[..]);
-                v.extend_from_slice(bs);
-                let (used, need, seq, pyld) = mysql_next(&v);
-                if need == 0 {
-                    let (nxt, out) = state_act(c2s, seq, lst, pyld);
-                    (used - part.len(), PcktState::Start { lst: nxt, }, out)
-                } else {
-                    (used - part.len(), PcktState::Frag { need: need, part: part, seq: seq, lst: lst }, None)
-                }
-            } else {
-                part.extend_from_slice(bs);
-                (bs.len(), PcktState::HeaderFrag { need: 4 - part.len(), part: part, lst: lst }, None)
-            }
-        },
+        PcktState::Frag { header, need, mut part, seq, lst } => {
+            debug!("PcktState::Frag {{ {:?}, {:?}, {:?}, {:?}, {:?}, }}", header, need, part, seq, lst);
+            match header {
+                true => {
+                    part.extend_from_slice(bs);
+                    match part.len() {
+                        0 ... 3 => {
+                            // still a partial header
+                            (bs.len(), PcktState::Frag { header: true, need: 0, part: part, seq: 0, lst: lst }, None)
+                        },
+                        _ => {
+                            let mut x: Vec<u8> = Vec::new();
+                            x.extend_from_slice(&part[..]);
+                            let (used, need, seq, pyld) = mysql_next(&x);
+                            if need == 0 {
+                                let (nxt, out) = state_act(c2s, seq, lst, pyld);
+                                (used, PcktState::Start { lst: nxt, }, out)
+                            } else {
+                                let mut v: Vec<u8> = Vec::new();
+                                v.extend_from_slice(bs);
+                                (used, PcktState::Frag { header: false, need: need, part: v, seq: seq, lst: lst }, None)
+                            }
+                        }
+                    }
 
-        PcktState::Frag { need, mut part, seq, lst } => { debug!("PcktState::Frag {{ {:?}, {:?}, {:?}, {:?}, }}", need, part, seq, lst);
-            let (used, need, pyld) = mysql_frag(need, bs);
-            part.extend_from_slice(pyld);
-            if need == 0 {
-                let (nxt, out) = state_act(c2s, seq, lst, &part[..]);
-                (used, PcktState::Start { lst: nxt, }, out)
-            } else {
-                (used, PcktState::Frag { need: need, part: part, seq: seq, lst: lst }, None)
+
+                },
+                false => {
+                    let (used, need, pyld) = mysql_frag(need, bs);
+                    part.extend_from_slice(pyld);
+                    if need == 0 {
+                        let (nxt, out) = state_act(c2s, seq, lst, &part[..]);
+                        (used, PcktState::Start { lst: nxt, }, out)
+                    } else {
+                        (used, PcktState::Frag { header: false, need: need, part: part, seq: seq, lst: lst }, None)
+                    }
+                }
             }
         },
 
@@ -207,7 +221,13 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
 }
 
 fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
-    debug!("tcp_pyld: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
+
+    if bs.len() == 0 {
+        // ignore empty packets - they are just ACKs
+        return;
+    }
+
+    debug!("tcp_pyld: c2s={:?}, strm={:?}, bs.len()={:?}, bs={:?}", c2s, strm, bs.len(), mk_ascii(bs));
 
     STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut tmp = f.borrow_mut();
         let mut i: usize = 0;
