@@ -11,26 +11,30 @@ env:
 matrix:
   include:
     # Nightly channel
-    - os: linux
-      env: TARGET=armv7-unknown-linux-gnueabihf CHANNEL=nightly
-      sudo: required
-      addons:
-        apt:
-          # Use the same packages the stable version uses
-          packages: *armv7_unknown_linux_gnueabihf
     - os: osx
       env: TARGET=i686-apple-darwin CHANNEL=nightly
     - os: linux
       env: TARGET=i686-unknown-linux-gnu CHANNEL=nightly
       addons:
         apt:
-          packages: *i686_unknown_linux_gnu
+          packages: 
+            - *i686_unknown_linux_gnu
+            - libssl-dev  
     - os: osx
       env: TARGET=x86_64-apple-darwin CHANNEL=nightly
     - os: linux
       env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly
+      addons:
+        apt:
+          packages: 
+            - libssl-dev  
     - os: linux
       env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly
+      addons:
+        apt:
+          packages: 
+            - libssl-dev  
+      
 
 install:
   - export PATH="$PATH:$HOME/.cargo/bin"
