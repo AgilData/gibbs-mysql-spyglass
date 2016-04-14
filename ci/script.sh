@@ -44,8 +44,8 @@ run_test_suite() {
     export RUST_TEST_THREADS=1
   fi
 
-  cargo build --target $TARGET --verbose
-  cargo test --target $TARGET
+  cargo build --release --target $TARGET --verbose
+  cargo test --release --target $TARGET
 
   # sanity check the file type
   file target/$TARGET/debug/hello
