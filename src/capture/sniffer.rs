@@ -95,11 +95,11 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
         MySQLState::Columns { seq, num, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
             if c2s {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
-                //TODO: this check is incorrect
-            } else if num < cnt {
-                (MySQLState::Columns { seq: nxt_seq, num: num + 1, cnt: cnt, }, None)
             } else {
-                (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None)
+                match pyld[0] {
+                    0xfe => (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None),
+                    _ => (MySQLState::Columns { seq: nxt_seq, num: num + 1, cnt: cnt, }, None)
+                }
             }
         },
 
