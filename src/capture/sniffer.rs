@@ -137,6 +137,10 @@ fn mysql_frag(need: usize, bs: &[u8]) -> (usize, usize, &[u8]) {
     (used, need, pyld)
 }
 
+fn mysql_packet_length(bs: &[u8]) -> usize {
+    (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16)
+}
+
 fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
     match bs.len() {
         0 ... 3 => {
@@ -147,7 +151,7 @@ fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
             (used, need, 0, pyld)
         },
         _ => {
-            let len: usize = (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16);
+            let len = mysql_packet_length(bs);
             let seq: u8 = bs[3];
             let used = cmp::min(4 + len, bs.len());
             let pyld = &bs[0..used];
@@ -177,10 +181,13 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
             }
         },
 
-        PcktState::Frag { need, mut part, seq, lst } => { debug!("PcktState::Frag {{ {:?}, {:?}, {:?}, {:?}, }}", need, part, seq, lst);
+        PcktState::Frag { mut need, mut part, seq, lst } => { debug!("PcktState::Frag {{ {:?}, {:?}, {:?}, {:?}, }}", need, part, seq, lst);
+            if need == 0 && part.len() == 4 {
+                need = mysql_packet_length(&part[..]);
+            }
             let (used, need, pyld) = mysql_frag(need, bs);
             part.extend_from_slice(pyld);
-            if need == 0 && pyld.len() > 4 {
+            if need == 0 && part.len() > 4 {
                 let (nxt, out) = state_act(c2s, seq, lst, &part[4..]);
                 (used, PcktState::Start { lst: nxt, }, out)
             } else {
