@@ -70,9 +70,17 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
         MySQLState::Wait => { debug!("MySQLState::Wait");
             if c2s && nxt_seq == 0 && pyld[0] == 3 {
                 let qry = &pyld[1..];
-                let cr = redact.replace_all(&str::from_utf8(qry).unwrap(), "$p?");
-                print!(".");
-                (MySQLState::Query { seq: nxt_seq, }, Some(format!("TYPE: QUERY\tSQL:\n{}", cr)))
+                match str::from_utf8(qry) {
+                    Ok(x) => {
+                        let cr = redact.replace_all(&x, "$p?");
+                        print!(".");
+                        (MySQLState::Query { seq: nxt_seq, }, Some(format!("TYPE: QUERY\tSQL:\n{}", cr)))
+                    },
+                    Err(e) => {
+                        debug!("redact failed for {:?} with error: {:?}", mk_ascii(qry), e);
+                        (MySQLState::Wait, None)
+                    }
+                }
             } else {
                 (MySQLState::Wait, None)
             }
