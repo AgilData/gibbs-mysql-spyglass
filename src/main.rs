@@ -181,7 +181,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskStop, "", opt)
     },
     AskStop => {
-        print!("Starting capture, press enter to stop.");
+        println!("Starting capture, press enter to stop.");
         let sniff_opt = opt.clone();
         let _= thread::spawn(|| {
             sniff(sniff_opt);
