@@ -142,12 +142,14 @@ fn mysql_packet_length(bs: &[u8]) -> usize {
 }
 
 fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
+    debug!("mysql_next() bs.len={}", bs.len());
     match bs.len() {
         0 ... 3 => {
             // not enough bytes to know how many bytes we need beyond the header
             let used = bs.len();
             let need = 4 - used;
             let pyld = &bs[0..used];
+            debug!("mysql_next()) used={:?} need={:?} pyld={:?}", used, need, mk_ascii(pyld));
             (used, need, 0, pyld)
         },
         _ => {
@@ -156,6 +158,7 @@ fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
             let used = cmp::min(4 + len, bs.len());
             let pyld = &bs[0..used];
             let need = len + 4 - used;
+            debug!("mysql_next()) used={:?} need={:?} pyld={:?}", used, need, mk_ascii(pyld));
             (used, need, seq, pyld)
         }
     }
@@ -169,7 +172,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                 MySQLState::Wait if !c2s => (bs.len(), PcktState::Start { lst: lst, }, None),
                 _ => {
                     let (used, need, seq, pyld) = mysql_next(bs);
-                    if need == 0 && pyld.len() > 4 {
+                    if need == 0 {
                         let (nxt, out) = state_act(c2s, seq, lst, &pyld[4..]);
                         (used, PcktState::Start { lst: nxt, }, out)
                     } else {
@@ -183,6 +186,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
 
         PcktState::Frag { mut need, mut part, seq, lst } => { debug!("PcktState::Frag {{ {:?}, {:?}, {:?}, {:?}, }}", need, part, seq, lst);
             if need == 0 && part.len() == 4 {
+                // we have a complete header, so we can see how many bytes are needed
                 need = mysql_packet_length(&part[..]);
             }
             let (used, need, pyld) = mysql_frag(need, bs);
