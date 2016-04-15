@@ -11,8 +11,16 @@ spyglass-capture.dat
 spyglass.log
 examples
 
+# IntelliJ
 .idea
+*.ipr
+*.iws
+*.iml
 
+# Eclipse
+.project
+
+# OS X
 .DS_Store
 
 # TravisCI
