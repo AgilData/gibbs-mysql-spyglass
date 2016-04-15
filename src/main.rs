@@ -19,6 +19,14 @@
 #![feature(plugin)]
 #![plugin(regex_macros)]
 
+macro_rules! printfl {
+    ($($tt:tt)*) => {{
+        use std::io::Write;
+        print!($($tt)*);
+        ::std::io::stdout().flush().ok().expect("flush() fail");
+    }}
+}
+
 #[macro_use]
 extern crate log;
 extern crate log4rs;
@@ -80,7 +88,7 @@ enum CLIState {
 use CLIState::*;
 
 fn again(msg: &str, dflt: &Display) {
-    println!("{}, please try again {} ", msg, dflt);
+    printfl!("{}\nplease try again {} ", msg, dflt);
 }
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
@@ -89,7 +97,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskKey, "", opt)
     },
     AskKey => {
-        println!("What is your API Key (get one at https://gibbs.agildata.com/)? [{}] ", opt.key);
+        printfl!("What is your API Key (get one at https://gibbs.agildata.com/)? [{}] ", opt.key);
         ChkKey
     },
     ChkKey => {
@@ -103,7 +111,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         }
     },
     AskHost => {
-        println!("Great! Let's set up your MySQL connection. What's your MySQL host? [{}] ", opt.host);
+        printfl!("Great! Let's set up your MySQL connection. What's your MySQL host? [{}] ", opt.host);
         ChkHost
     },
     ChkHost => {
@@ -121,7 +129,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         } else { cli_act(AskPort, "", opt) }
      },
     AskPort => {
-        println!("And your MySQL port? [{}] ", opt.port);
+        printfl!("And your MySQL port? [{}] ", opt.port);
         ChkPort
     },
     ChkPort => {
@@ -139,7 +147,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         } else { cli_act(AskUser, "", opt) }
     },
     AskUser => {
-        println!("And your MySQL username? [{}] ", opt.user);
+        printfl!("And your MySQL username? [{}] ", opt.user);
         ChkUser
     },
     ChkUser => {
@@ -147,7 +155,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskPass, "", opt)
     },
     AskPass => {
-        println!("And your MySQL password? [] ");
+        printfl!("And your MySQL password? [] ");
         ChkPass
     },
     ChkPass => {
@@ -155,18 +163,18 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskDb, "", opt)
     },
     AskDb => {
-        println!("And the MySQL database to analyze? [{}] ", opt.db);
+        printfl!("And the MySQL database to analyze? [{}] ", opt.db);
         ChkDb
     },
     ChkDb => {
         if inp.len() > 0 { opt.db = inp.to_owned(); }
-        print!("Querying schema");
+        printfl!("Querying schema");
         schema(opt.clone());
         println!("\nSchema done.");
         cli_act(AskIface, "", opt)
     },
     AskIface => {
-        println!("And finally, your network interface carrying MySQL traffic? (eth0, en0, ...) [{}] ", opt.iface);
+        printfl!("And finally, your network interface carrying MySQL traffic? (eth0, en0, ...) [{}] ", opt.iface);
         ChkIface
     },
     ChkIface => {
@@ -174,14 +182,14 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskStart, "", opt)
     },
     AskStart => {
-        println!("Great! We're all set. Press enter to start data capture.");
+        printfl!("Great! We're all set. Press enter to start data capture.");
         ChkStart
     },
     ChkStart => {
         cli_act(AskStop, "", opt)
     },
     AskStop => {
-        println!("Starting capture, press enter to stop.");
+        printfl!("Starting capture, press enter to stop.");
         let sniff_opt = opt.clone();
         let _= thread::spawn(|| {
             sniff(sniff_opt);
@@ -189,18 +197,18 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         ChkStop
     },
     ChkStop => {
-        println!("\nData capture stopped. We found XX queries, totaling YYMB of data.");
+        println!("\nData capture stopped. We found XX queries, totaling YY MB of data.");
         cli_act(AskSend, "", opt)
     },
     AskSend => {
-        println!("Would you like to send this to Gibbs now? [y] ");
+        printfl!("Would you like to send this to Gibbs now? [y] ");
         ChkSend
     },
     ChkSend => {
         if inp.len() == 0 || inp.to_string().to_uppercase() == "Y" {
-            print!("Sending...");
+            printfl!("\nSending...");
             upload(opt.clone());
-            println!(".done! Press enter to complete.");
+            printfl!(".done! Press enter to complete. ");
         }
         Quit
     },

@@ -73,7 +73,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 match str::from_utf8(qry) {
                     Ok(x) => {
                         let cr = redact.replace_all(&x, "$p?");
-                        print!(".");
+                        printfl!(".");
                         (MySQLState::Query { seq: nxt_seq, }, Some(format!("TYPE: QUERY\tSQL:\n{}", cr)))
                     },
                     Err(e) => {

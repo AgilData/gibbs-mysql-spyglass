@@ -65,7 +65,7 @@ pub fn schema(opt: COpts) {
                             .fold((), |_, row| {
                                 let (_, c,): (String, String) = mysql::from_row(row);
                                 let _ = writeln!(tmp, "--GIBBS\tTYPE: DDL\tTIMESTAMP: {}\tSCHEMA: {}\tSQL:\n{};", millis, db, c);
-                                print!(".");
+                                printfl!(".");
                             })
                         });
 
@@ -77,7 +77,7 @@ pub fn schema(opt: COpts) {
                                 let _ = writeln!(tmp,
                                     "--GIBBS\tTYPE: TABLE_STATS\tTIMESTAMP: {}\tTABLE: {}\tROW_COUNT: {}\tDATA_LENGTH: {}\tINDEX_LENGTH: {};",
                                     millis, t, row_count, data_length, index_length);
-                                print!(".");
+                                printfl!(".");
                             })
                         });
 
