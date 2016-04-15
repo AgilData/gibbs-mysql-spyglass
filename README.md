@@ -10,5 +10,8 @@ It’s quite simple. Just download Spyglass, my database traffic analyzer, to yo
 |i686-apple-darwin|i686-unknown-linux-gnu|x86_64-apple-darwin|x86_64-unknown-linux-gnu|x86_64-unknown-linux-musl|
 |:---------------:|:--------------------:|:-----------------:|:----------------------:|:-----------------------:|
 
-# Prerequisite
+# Installation
+wget -O - https://raw.githubusercontent.com/AgilData/gibbs-mysql-spyglass/master/install.sh | sudo bash
+
+# Developer Prerequisites
 https://www.rustup.rs/
