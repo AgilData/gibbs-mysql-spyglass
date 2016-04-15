@@ -69,7 +69,7 @@ pub fn schema(opt: COpts) {
                             })
                         });
 
-            let _ = pool.prep_exec(format!("SELECT table_rows, data_length, index_length FROM information_schema.tables WHERE table_name = '{}'", t), ())
+            let _ = pool.prep_exec(format!("SELECT table_rows, data_length, index_length FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'", db, t), ())
                         .map(|res| { res
                             .map(|x| x.unwrap())
                             .fold((), |_, row| {
