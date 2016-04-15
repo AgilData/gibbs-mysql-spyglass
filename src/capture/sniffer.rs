@@ -97,6 +97,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
             } else {
                 match pyld[0] {
+                    // columns are followed by an EOF_Packet, then the rows
                     0xfe => (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None),
                     _ => (MySQLState::Columns { seq: nxt_seq, num: num + 1, cnt: cnt, }, None)
                 }
@@ -164,7 +165,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                 MySQLState::Wait if !c2s => (bs.len(), PcktState::Start { lst: lst, }, None),
                 _ => {
                     let (used, need, seq, pyld) = mysql_next(bs);
-                    if need == 0 {
+                    if need == 0 && pyld.len() > 4 {
                         let (nxt, out) = state_act(c2s, seq, lst, &pyld[4..]);
                         (used, PcktState::Start { lst: nxt, }, out)
                     } else {
@@ -179,7 +180,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
         PcktState::Frag { need, mut part, seq, lst } => { debug!("PcktState::Frag {{ {:?}, {:?}, {:?}, {:?}, }}", need, part, seq, lst);
             let (used, need, pyld) = mysql_frag(need, bs);
             part.extend_from_slice(pyld);
-            if need == 0 {
+            if need == 0 && pyld.len() > 4 {
                 let (nxt, out) = state_act(c2s, seq, lst, &part[4..]);
                 (used, PcktState::Start { lst: nxt, }, out)
             } else {
