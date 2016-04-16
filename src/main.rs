@@ -93,7 +93,7 @@ fn again(msg: &str, dflt: &Display) {
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     Welcome => {
-        println!("Welcome to Gibbs' Spyglass MySQL Traffic Capture Tool.");
+        println!("\nWelcome to Gibbs' Spyglass MySQL Traffic Capture Tool.\n");
         cli_act(AskKey, "", opt)
     },
     AskKey => {
@@ -111,7 +111,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         }
     },
     AskHost => {
-        printfl!("Great! Let's set up your MySQL connection. What's your MySQL host? [{}] ", opt.host);
+        printfl!("Great! Let's set up your MySQL connection.\n    What's your MySQL host? [{}] ", opt.host);
         ChkHost
     },
     ChkHost => {
@@ -129,7 +129,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         } else { cli_act(AskPort, "", opt) }
      },
     AskPort => {
-        printfl!("And your MySQL port? [{}] ", opt.port);
+        printfl!("    And your MySQL port? [{}] ", opt.port);
         ChkPort
     },
     ChkPort => {
@@ -147,7 +147,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         } else { cli_act(AskUser, "", opt) }
     },
     AskUser => {
-        printfl!("And your MySQL username? [{}] ", opt.user);
+        printfl!("    And your MySQL username? [{}] ", opt.user);
         ChkUser
     },
     ChkUser => {
@@ -155,7 +155,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskPass, "", opt)
     },
     AskPass => {
-        printfl!("And your MySQL password? [] ");
+        printfl!("    And your MySQL password? [] ");
         ChkPass
     },
     ChkPass => {
@@ -163,18 +163,18 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskDb, "", opt)
     },
     AskDb => {
-        printfl!("And the MySQL database to analyze? [{}] ", opt.db);
+        printfl!("    And the MySQL database to analyze? [{}] ", opt.db);
         ChkDb
     },
     ChkDb => {
         if inp.len() > 0 { opt.db = inp.to_owned(); }
-        printfl!("Querying schema");
+        printfl!("\nQuerying schema");
         schema(opt.clone());
-        println!("\nSchema done.");
+        println!("\nSchema done.\n");
         cli_act(AskIface, "", opt)
     },
     AskIface => {
-        printfl!("And finally, your network interface carrying MySQL traffic? (eth0, en0, ...) [{}] ", opt.iface);
+        printfl!("    And finally, your network interface carrying MySQL traffic? (eth0, en0, ...) [{}] ", opt.iface);
         ChkIface
     },
     ChkIface => {
@@ -182,7 +182,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskStart, "", opt)
     },
     AskStart => {
-        printfl!("Great! We're all set. Press enter to start data capture.");
+        printfl!("\nGreat! We're all set. Press enter to start data capture.");
         ChkStart
     },
     ChkStart => {
