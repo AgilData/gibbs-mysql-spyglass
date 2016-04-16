@@ -88,7 +88,7 @@ enum CLIState {
 use CLIState::*;
 
 fn again(msg: &str, dflt: &Display) {
-    printfl!("{}\nplease try again {} ", msg, dflt);
+    printfl!("{}\nplease try again [{}] ", msg, dflt);
 }
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
@@ -206,9 +206,11 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     },
     ChkSend => {
         if inp.len() == 0 || inp.to_string().to_uppercase() == "Y" {
-            printfl!("\nSending...");
+            printfl!("\nSending......");
             upload(opt.clone());
-            printfl!(".done! Press enter to complete. ");
+            println!(".done.");
+            println!("\nYou can check on the status of your analysis by going to this URL: https://gibbs.agildata.com/analyses/XXXXXXXXX");
+            println!("Spyglass done! Press enter to complete this run.");
         }
         Quit
     },
