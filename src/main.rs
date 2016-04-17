@@ -40,7 +40,7 @@ extern crate regex;
 use std::thread;
 
 mod util;
-use util::{COpts, TMP_FILE};
+use util::{COpts, TMP_FILE, VERSION};
 use std::net::{IpAddr, Ipv4Addr};
 use std::fmt::Display;
 
@@ -94,7 +94,7 @@ fn again(msg: &str, dflt: &Display) {
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     Welcome => {
-        println!("\nWelcome to Gibbs' Spyglass MySQL Traffic Capture Tool.\n");
+        println!("\nWelcome to Gibbs' Spyglass MySQL Traffic Capture Tool. (v{})\n", VERSION);
         cli_act(AskKey, "", opt)
     },
     AskKey => {
