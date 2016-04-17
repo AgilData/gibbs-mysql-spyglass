@@ -20,20 +20,24 @@ mktempd() {
 }
 
 install_rust() {
-  local td=$(mktempd)
+	local td=$(mktempd)
 
-  pushd $td
-  
-  wget http://static.rust-lang.org/dist/$DATE/rust-nightly-$host.tar.gz
-  tar -xf rust-nightly-$host.tar.gz
-  sudo rust-nightly-$host/install.sh
-  
-  popd
+	pushd $td
 
-  rm -r $td
+	wget http://static.rust-lang.org/dist/$DATE/rust-nightly-$host.tar.gz
+	tar -xf rust-nightly-$host.tar.gz
 
-  rustc -V
-  cargo -V
+	export LD_LIBRARY_PATH=~/opt/rust/rustc/lib:$LD_LIBRARY_PATH
+	export PATH=~/.rust/rust/rustc/bin:$PATH
+	export PATH=~/.rust/rust/cargo/bin:$PATH
+	rust-nightly-$host/install.sh --prefix=~/.rust/
+
+	popd
+
+	rm -r $td
+
+	rustc -V
+	cargo -V
 }
 
 install_standard_crates() {
