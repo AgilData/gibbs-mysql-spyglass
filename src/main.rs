@@ -46,6 +46,7 @@ use std::fmt::Display;
 
 mod capture;
 use capture::client::schema;
+use capture::sniffer::get_iface_names;
 use capture::sniffer::sniff;
 
 mod comm;
@@ -174,7 +175,22 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskIface, "", opt)
     },
     AskIface => {
-        printfl!("    And finally, your network interface carrying MySQL traffic? (eth0, en0, ...) [{}] ", opt.iface);
+        opt.iface = String::from("");
+        let mut prompt: String = String::from("    And finally, your network interface carrying MySQL traffic? (");
+        let valid_ifaces = get_iface_names();
+        let mut sep = "";
+        for iface in valid_ifaces {
+            if iface == "eth0" || iface == "en0" {
+                opt.iface = iface.clone();
+            }
+            prompt.push_str(sep);
+            prompt.push_str(&iface);
+            sep = ", ";
+        }
+        prompt.push_str(") [");
+        prompt.push_str(&opt.iface);
+        prompt.push_str("]");
+        println!("\n{}", prompt);
         ChkIface
     },
     ChkIface => {

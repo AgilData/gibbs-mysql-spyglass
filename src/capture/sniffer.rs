@@ -280,6 +280,28 @@ fn process_pckt(iname: &str, ether: &EthernetPacket, opt: &COpts) {
     }
 }
 
+// provides a list of valid network interfaces, excluding any loopback interfaces
+pub fn get_iface_names() -> Vec<String> {
+    let valid_ifaces = get_network_interfaces()
+        .into_iter();
+    let mut iface_names: Vec<String> = Vec::new();
+    for iface in valid_ifaces {
+        if !iface.is_loopback() && iface.ips.is_some() {
+            let mut ipv4 = false;
+            for ip in iface.ips.unwrap() {
+                ipv4 = ipv4 || match ip {
+                    IpAddr::V4(addr) => true,
+                    _ => false
+                };
+            }
+            if ipv4 {
+                iface_names.push(iface.name);
+            }
+        }
+    }
+    iface_names
+}
+
 pub fn sniff(opt: COpts) {
     let name_cmp = |iface: &NetworkInterface| iface.name == opt.iface;
     let ifaces = get_network_interfaces();
