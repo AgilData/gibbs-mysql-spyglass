@@ -39,7 +39,8 @@ matrix:
             - libssl
             - libssl-dev  
             - pkg-config
-            - gcc-multilib      
+            - gcc-multilib
+            - musl-tools
 
 install:
   - export PATH="$PATH:$HOME/.cargo/bin"
