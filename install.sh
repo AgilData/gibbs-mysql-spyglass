@@ -17,4 +17,5 @@ fi
 FILENAME="gibbs-mysql-spyglass-${VERSION}-${PLATFORM}.tar.gz"
 wget $BASE_URL/$VERSION/$FILENAME
 tar -xvf $FILENAME
-./spyglass
+
+echo "Spyglass is ready, type ./spyglass to run it!"
