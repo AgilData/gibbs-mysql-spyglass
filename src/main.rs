@@ -170,7 +170,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     ChkDb => {
         if inp.len() > 0 { opt.db = inp.to_owned(); }
         printfl!("\nQuerying schema");
-        schema(opt.clone());
+        let file_size = schema(opt.clone());
         println!("\nSchema done.\n");
         cli_act(AskIface, "", opt)
     },
@@ -208,7 +208,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         printfl!("Starting capture, press enter to stop.");
         let sniff_opt = opt.clone();
         let _= thread::spawn(|| {
-            sniff(sniff_opt);
+            sniff(sniff_opt, 0); //TODO: needs to be file_size returned from schema()
         });
         ChkStop
     },

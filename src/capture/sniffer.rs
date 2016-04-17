@@ -206,12 +206,12 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
     }
 }
 
-fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
+fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8], mut file_size: usize) -> usize {
     debug!("tcp_pyld() in: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
 
     if bs.len() == 0 {
         // ignore empty packets
-        return;
+        return file_size;
     }
 
     STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut tmp = f.borrow_mut();
@@ -229,7 +229,10 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
             if out.is_some() {
                 let timespec = time::get_time();
                 let millis = timespec.sec * 1000 + timespec.nsec as i64 / 1000 / 1000;
-                let _ = writeln!(tmp, "{}", format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};", millis, strm, out.unwrap()));
+                let msg = format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};", millis, strm, out.unwrap());
+                let _ = writeln!(tmp, "{}", msg);
+                file_size = file_size + msg.len();
+
             }
         }
         debug!("tcp_pyld() out: loop end, c2s={:?}, strm={:?}, st={:?}", c2s, strm, st);
@@ -237,46 +240,53 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
 
         hm.insert(strm, st);  // ending state
     }); });
+
+    file_size
 }
 
-fn tcp_pckt(iname: &str, src: IpAddr, dst: IpAddr, packet: &[u8], opt: &COpts) {
+fn tcp_pckt(iname: &str, src: IpAddr, dst: IpAddr, packet: &[u8], opt: &COpts, mut file_size: usize) -> usize {
     let udp = UdpPacket::new(packet);  // use UDP packet since parts we use in same place
     if let Some(udp) = udp {
-        if src == opt.host && udp.get_source() == opt.port {  // server -> client
-            tcp_pyld(false, udp.get_destination(), &packet[(packet[12] >> 4) as usize * 4..]);
+        file_size = if src == opt.host && udp.get_source() == opt.port {  // server -> client
+            tcp_pyld(false, udp.get_destination(), &packet[(packet[12] >> 4) as usize * 4..], file_size)
         } else if dst == opt.host && udp.get_destination() == opt.port {  // client -> server
-            tcp_pyld(true, udp.get_source(), &packet[(packet[12] >> 4) as usize * 4..]);
+            tcp_pyld(true, udp.get_source(), &packet[(packet[12] >> 4) as usize * 4..], file_size)
+        } else {
+            file_size
         }
     } else {
         debug!("[{}]: Malformed TCP Packet", iname);
     }
+    file_size
 }
 
-fn transport_layer(iname: &str, src: IpAddr, dst: IpAddr, proto: IpNextHeaderProtocol, pckt: &[u8], opt: &COpts) {
+fn transport_layer(iname: &str, src: IpAddr, dst: IpAddr, proto: IpNextHeaderProtocol, pckt: &[u8], opt: &COpts, file_size: usize) -> usize {
     match proto {
-        IpNextHeaderProtocols::Tcp => tcp_pckt(iname, src, dst, pckt, opt),
-        _ => {},
+        IpNextHeaderProtocols::Tcp => tcp_pckt(iname, src, dst, pckt, opt, file_size),
+        _ => file_size,
     }
 }
 
-fn ipv4_pckt(iname: &str, ether: &EthernetPacket, opt: &COpts) {
+fn ipv4_pckt(iname: &str, ether: &EthernetPacket, opt: &COpts, mut file_size: usize) -> usize {
     let hdr = Ipv4Packet::new(ether.payload());
     if let Some(hdr) = hdr {
-        transport_layer(iname,
+        file_size = transport_layer(iname,
                         IpAddr::V4(hdr.get_source()),
                         IpAddr::V4(hdr.get_destination()),
                         hdr.get_next_level_protocol(),
                         hdr.payload(),
-                        opt);
+                        opt,
+                    file_size);
     } else {
         debug!("[{}]: Malformed IPv4 Packet", iname);
     }
+    file_size
 }
 
-fn process_pckt(iname: &str, ether: &EthernetPacket, opt: &COpts) {
+fn process_pckt(iname: &str, ether: &EthernetPacket, opt: &COpts, file_size: usize) -> usize {
     match ether.get_ethertype() {
-        EtherTypes::Ipv4 => ipv4_pckt(iname, ether, opt),
-        _ => {},
+        EtherTypes::Ipv4 => ipv4_pckt(iname, ether, opt, file_size),
+        _ => file_size,
     }
 }
 
@@ -302,7 +312,7 @@ pub fn get_iface_names() -> Vec<String> {
     iface_names
 }
 
-pub fn sniff(opt: COpts) {
+pub fn sniff(opt: COpts, mut file_size: usize) {
     let name_cmp = |iface: &NetworkInterface| iface.name == opt.iface;
     let ifaces = get_network_interfaces();
 
@@ -320,9 +330,10 @@ pub fn sniff(opt: COpts) {
     };
 
     let mut iter = rx.iter();
-    loop {
+
+    while file_size < 10000000 {
         match iter.next() {
-            Ok(p) => process_pckt(&iface.name[..], &p, &opt),
+            Ok(p) => file_size = process_pckt(&iface.name[..], &p, &opt, file_size),
             Err(e) => panic!("failure receiving packet: {}", e)
         }
     }

@@ -29,7 +29,10 @@ use ::OUT;
 
 use std::io::Write;
 
-pub fn schema(opt: COpts) {
+pub fn schema(opt: COpts) -> usize {
+
+    let mut file_size: usize = 0;
+
     let db = opt.db.clone().into_boxed_str();
     let my_opts = Opts {
         ip_or_hostname: Some(opt.host.to_string()),
@@ -64,7 +67,9 @@ pub fn schema(opt: COpts) {
                             .map(|x| x.unwrap())
                             .fold((), |_, row| {
                                 let (_, c,): (String, String) = mysql::from_row(row);
-                                let _ = writeln!(tmp, "--GIBBS\tTYPE: DDL\tTIMESTAMP: {}\tSCHEMA: {}\tSQL:\n{};", millis, db, c);
+                                let msg = format!("--GIBBS\tTYPE: DDL\tTIMESTAMP: {}\tSCHEMA: {}\tSQL:\n{};", millis, db, c);
+                                let _ = writeln!(tmp, "{}", msg);
+                                file_size = file_size + msg.len();
                                 printfl!(".");
                             })
                         });
@@ -74,9 +79,10 @@ pub fn schema(opt: COpts) {
                             .map(|x| x.unwrap())
                             .fold((), |_, row| {
                                 let (row_count,data_length,index_length): (u64,u64,u64) = mysql::from_row(row);
-                                let _ = writeln!(tmp,
-                                    "--GIBBS\tTYPE: TABLE_STATS\tTIMESTAMP: {}\tTABLE: {}\tROW_COUNT: {}\tDATA_LENGTH: {}\tINDEX_LENGTH: {};",
-                                    millis, t, row_count, data_length, index_length);
+                                let msg = format!("--GIBBS\tTYPE: TABLE_STATS\tTIMESTAMP: {}\tTABLE: {}\tROW_COUNT: {}\tDATA_LENGTH: {}\tINDEX_LENGTH: {};",
+                                millis, t, row_count, data_length, index_length);
+                                let _ = writeln!(tmp, "{}", msg);
+                                file_size = file_size + msg.len();
                                 printfl!(".");
                             })
                         });
@@ -84,4 +90,6 @@ pub fn schema(opt: COpts) {
         }
 
     });
+
+    file_size
 }
