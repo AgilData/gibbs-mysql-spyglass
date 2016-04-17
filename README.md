@@ -11,7 +11,9 @@ It’s quite simple. Just download Spyglass, my database traffic analyzer, to yo
 |:---------------:|:--------------------:|:-----------------:|:----------------------:|:-----------------------:|
 
 # Installation
+```
 wget -O - https://raw.githubusercontent.com/AgilData/gibbs-mysql-spyglass/master/install.sh | sudo bash
+```
 
 # Developer Prerequisites
 https://www.rustup.rs/
