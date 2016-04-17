@@ -59,7 +59,7 @@ enum PcktState {
 }
 
 fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLState, Option<String>) {
-    debug!("state_act: c2s={:?}, nxt_seq={:?}, lst={:?}, pyld={:?}", c2s, nxt_seq, lst, pyld);
+    debug!("state_act() in: c2s={:?}, nxt_seq={:?}, lst={:?}, pyld={:?}", c2s, nxt_seq, lst, pyld);
     let redact = regex!(r#"(?x)( (?P<p>[\s=\(\+-/\*]) (
                             '[^'\\]*((\\.|'')[^'\\]*)*' |
                             "[^"\\]*((\\.|"")[^"\\]*)*" |
@@ -67,7 +67,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                         ) )"#);
 
     match lst {
-        MySQLState::Wait => { debug!("MySQLState::Wait");
+        MySQLState::Wait => {
             if c2s && nxt_seq == 0 && pyld[0] == 3 {
                 let qry = &pyld[1..];
                 match str::from_utf8(qry) {
@@ -86,7 +86,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
             }
         },
 
-        MySQLState::Query { seq, } => { debug!("MySQLState::Query {{ seq: {:?}, }}", seq);
+        MySQLState::Query { seq, } => {
             if c2s || nxt_seq != 1 {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
             } else {
@@ -100,7 +100,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
             }
         },
 
-        MySQLState::Columns { seq, num, cnt, }=> { debug!("MySQLState::Columns {{ seq: {:?}, cnt: {:?}, }}", seq, cnt);
+        MySQLState::Columns { seq, num, cnt, }=> {
             if c2s {
                 state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
             } else {
@@ -112,7 +112,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
             }
         },
 
-        MySQLState::Rows { seq, cnt, } => { debug!("MySQLState::Rows {{ {:?}, {:?} }}", seq, cnt);
+        MySQLState::Rows { seq, cnt, } => {
             if c2s {
                 state_act(c2s, seq, MySQLState::Wait, pyld)
             } else {
@@ -141,7 +141,7 @@ fn mysql_frag(need: usize, bs: &[u8]) -> (usize, usize, &[u8]) {
     let used = cmp::min(need, bs.len());
     let pyld = &bs[0..used];
     let need = need - used;
-    debug!("mysql_frag() used={:?} need={:?} pyld={:?}", used, need, mk_ascii(pyld));
+    debug!("mysql_frag() out: used={:?}, need={:?}, pyld={:?}", used, need, mk_ascii(pyld));
     (used, need, pyld)
 }
 
@@ -170,9 +170,9 @@ fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
 }
 
 fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<String>) {
-    debug!("nxt_state c2s={:?}, bs={:?}, ", c2s, bs);
+    debug!("nxt_state() in: c2s={:?}, st={:?}, bs={:?}", c2s, st, bs);
     match st {
-        PcktState::Start { lst, } => { debug!("PcktState::Start {{ {:?} }}", lst);
+        PcktState::Start { lst, } => {
             match lst {
                 MySQLState::Wait if !c2s => (bs.len(), PcktState::Start { lst: lst, }, None),
                 _ => {
@@ -189,7 +189,7 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
             }
         },
 
-        PcktState::Frag { mut need, mut part, seq, lst } => { debug!("PcktState::Frag {{ {:?}, {:?}, {:?}, {:?}, }}", need, part, seq, lst);
+        PcktState::Frag { mut need, mut part, seq, lst } => {
             if need == 0 && part.len() == 4 {
                 need = mysql_packet_length(&part[..]);
             }
@@ -207,13 +207,12 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
 }
 
 fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
+    debug!("tcp_pyld() in: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
 
     if bs.len() == 0 {
         // ignore empty packets
         return;
     }
-
-    debug!("tcp_pyld: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
 
     STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut tmp = f.borrow_mut();
         let mut i: usize = 0;
@@ -221,10 +220,10 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
             Some(mss) => mss.clone(),
             None => if c2s { PcktState::Start { lst: MySQLState::Wait, } } else { return; },
         };
-        debug!("tcp_pyld: begin");
+        debug!("tcp_pyld() in: loop begin, c2s={:?}, strm={:?}", c2s, strm);
         while i < bs.len() {
             let (used, nxt, out) = nxt_state(c2s, st, &bs[i..]);
-            debug!("tcp_pyld: used={:?}, nxt={:?}, out={:?}", used, nxt, out);
+            debug!("nxt_state() out: strm={:?}, used={:?}, nxt={:?}, out={:?}", strm, used, nxt, out);
             i += used;
             st = nxt;
             if out.is_some() {
@@ -233,7 +232,7 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
                 let _ = writeln!(tmp, "{}", format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};", millis, strm, out.unwrap()));
             }
         }
-        debug!("tcp_pyld: end");
+        debug!("tcp_pyld() out: loop end, c2s={:?}, strm={:?}, st={:?}", c2s, strm, st);
         assert!(i == bs.len());
 
         hm.insert(strm, st);  // ending state
