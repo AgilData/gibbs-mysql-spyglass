@@ -89,7 +89,7 @@ enum CLIState {
 use CLIState::*;
 
 fn again(msg: &str, dflt: &Display) {
-    printfl!("{}\nplease try again [{}] ", msg, dflt);
+    printfl!("{}, please try again [{}] ", msg, dflt);
 }
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
@@ -102,10 +102,10 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         ChkKey
     },
     ChkKey => {
+        // TODO:  inp.contains(Pattern of Regex here to check for non-hex chars)
         if inp.len() != 40 {
             again("Key must be 40 hex characters long", &opt.key);
             ChkKey
-        // } else if { check for all hex characters here
         } else {
             opt.key = inp.to_owned();
             cli_act(AskHost, "", opt)
@@ -130,7 +130,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         } else { cli_act(AskPort, "", opt) }
      },
     AskPort => {
-        printfl!("    And your MySQL port? [{}] ", opt.port);
+        printfl!("       And your MySQL port? [{}] ", opt.port);
         ChkPort
     },
     ChkPort => {
@@ -148,7 +148,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         } else { cli_act(AskUser, "", opt) }
     },
     AskUser => {
-        printfl!("    And your MySQL username? [{}] ", opt.user);
+        printfl!("       And your MySQL username? [{}] ", opt.user);
         ChkUser
     },
     ChkUser => {
@@ -156,7 +156,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskPass, "", opt)
     },
     AskPass => {
-        printfl!("    And your MySQL password? [] ");
+        printfl!("       And your MySQL password? [] ");
         ChkPass
     },
     ChkPass => {
@@ -164,7 +164,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskDb, "", opt)
     },
     AskDb => {
-        printfl!("    And the MySQL database to analyze? [{}] ", opt.db);
+        printfl!("       And your MySQL database to analyze? [{}] ", opt.db);
         ChkDb
     },
     ChkDb => {
@@ -175,23 +175,22 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskIface, "", opt)
     },
     AskIface => {
-        opt.iface = String::from("");
-        let mut prompt: String = String::from("    And finally, your network interface carrying MySQL traffic? (");
-        let valid_ifaces = get_iface_names();
-        let mut sep = "";
-        for iface in valid_ifaces {
-            if iface == "eth0" || iface == "en0" {
-                opt.iface = iface.clone();
-            }
-            prompt.push_str(sep);
-            prompt.push_str(&iface);
-            sep = ", ";
+        let fs = get_iface_names();
+        match fs.len() {
+            0 => {
+                println!("\n\nNo proper active network interfaces for Spyglass to use! Press enter to complete this run.");
+                Quit
+            },
+            _ => {
+                opt.iface = fs.get(0).unwrap().to_owned();
+                if fs.len() == 1 {
+                    cli_act(AskStart, "", opt)
+                } else {
+                    printfl!("\n    And finally, pick your network interface carrying MySQL traffic? {:?} [{}]", fs, opt.iface);
+                    ChkIface
+                }
+            },
         }
-        prompt.push_str(") [");
-        prompt.push_str(&opt.iface);
-        prompt.push_str("]");
-        println!("\n{}", prompt);
-        ChkIface
     },
     ChkIface => {
         if inp.len() > 0 { opt.iface = inp.to_owned(); }
@@ -247,7 +246,7 @@ fn main() {
         user: "root".to_string(),
         pass: "".to_string(),
         db: "mysql".to_string(),
-        iface: "eth0".to_string(),
+        iface: "".to_string(),
         tx: None,
     };
 
