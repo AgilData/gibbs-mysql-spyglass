@@ -2,6 +2,8 @@
 
 set -ex
 
+DATE="2016-04-15"
+
 case "$TRAVIS_OS_NAME" in
   linux)
     host=x86_64-unknown-linux-gnu
@@ -11,42 +13,39 @@ case "$TRAVIS_OS_NAME" in
     ;;
 esac
 
+
+
 mktempd() {
   echo $(mktemp -d 2>/dev/null || mktemp -d -t tmp)
 }
 
-install_rustup() {
+install_rust() {
   local td=$(mktempd)
 
   pushd $td
-  curl -O https://static.rust-lang.org/rustup/dist/$host/rustup-setup
-  chmod +x rustup-setup
-  ./rustup-setup -y
+  
+  wget http://static.rust-lang.org/dist/$DATE/rust-nightly-$host.tar.gz
+  tar -xvf rust-nightly-$host.tar.gz
+  rust-nightly-$host/install.sh
+  
   popd
 
   rm -r $td
 
-  rustup default $CHANNEL
   rustc -V
   cargo -V
 }
 
 install_standard_crates() {
   if [ "$host" != "$TARGET" ]; then
-    if [ ! "$CHANNEL" = "stable" ]; then
-      rustup target add $TARGET
-    else
-      local version=$(rustc -V | cut -d' ' -f2)
-      local tarball=rust-std-${version}-${TARGET}
+	  local td=$(mktempd)
+	  
+	  curl -s https://static.rust-lang.org/dist/$DATE/rust-std-nightly-$TARGET.tar.gz | \
+		tar --strip-components 1 -C $td -xz
 
-      local td=$(mktempd)
-      curl -s https://static.rust-lang.org/dist/${tarball}.tar.gz | \
-        tar --strip-components 1 -C $td -xz
+	  $td/install.sh --prefix=$(rustc --print sysroot)
 
-      $td/install.sh --prefix=$(rustc --print sysroot)
-
-      rm -r $td
-    fi
+	  rm -r $td
   fi
 }
 
@@ -73,7 +72,7 @@ EOF
 }
 
 main() {
-  install_rustup
+  install_rust
   install_standard_crates
   configure_cargo
 
