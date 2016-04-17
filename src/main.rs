@@ -182,7 +182,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskStart, "", opt)
     },
     AskStart => {
-        printfl!("\nGreat! We're all set. Press enter to start data capture.");
+        printfl!("\nSuper! We're all set. Press enter to start data capture.");
         ChkStart
     },
     ChkStart => {
