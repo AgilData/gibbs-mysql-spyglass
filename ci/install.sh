@@ -25,8 +25,8 @@ install_rust() {
   pushd $td
   
   wget http://static.rust-lang.org/dist/$DATE/rust-nightly-$host.tar.gz
-  tar -xvf rust-nightly-$host.tar.gz
-  rust-nightly-$host/install.sh
+  tar -xf rust-nightly-$host.tar.gz
+  sudo rust-nightly-$host/install.sh
   
   popd
 
