@@ -331,10 +331,14 @@ pub fn sniff(opt: COpts, mut file_size: usize) {
 
     let mut iter = rx.iter();
 
-    while file_size < 10000000 {
+    let max_file_size = 10000000;
+
+    while file_size < max_file_size {
         match iter.next() {
             Ok(p) => file_size = process_pckt(&iface.name[..], &p, &opt, file_size),
             Err(e) => panic!("failure receiving packet: {}", e)
         }
     }
+
+    println!("Data capture stopped after recording {} bytes", file_size);
 }
