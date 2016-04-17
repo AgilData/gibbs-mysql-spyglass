@@ -63,6 +63,7 @@ thread_local!(static OUT: RefCell<File> =
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum CLIState {
     Welcome,
+    ChkPerms,
     AskKey,
     ChkKey,
     AskHost,
@@ -88,6 +89,11 @@ enum CLIState {
 
 use CLIState::*;
 
+extern crate libc;
+use libc::geteuid;
+
+fn actasroot() -> bool { unsafe { geteuid() == 0 } }
+
 fn again(msg: &str, dflt: &Display) {
     printfl!("{}, please try again [{}] ", msg, dflt);
 }
@@ -95,7 +101,16 @@ fn again(msg: &str, dflt: &Display) {
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     Welcome => {
         println!("\nWelcome to Gibbs' Spyglass MySQL Traffic Capture Tool. (v{})\n", VERSION);
-        cli_act(AskKey, "", opt)
+        cli_act(ChkPerms, "", opt)
+    },
+    ChkPerms => {
+        if actasroot() {
+            cli_act(AskKey, "", opt)
+        } else {
+            println!("Spyglass is not running with needed permissions to help you.");
+            println!("Try starting it with `sudo ` in front of it.");
+            cli_act(Quit, "", opt)
+        }
     },
     AskKey => {
         printfl!("What is your API Key (get one at https://gibbs.agildata.com/)? [{}] ", opt.key);
@@ -179,7 +194,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         match fs.len() {
             0 => {
                 println!("\n\nNo proper active network interfaces for Spyglass to use! Press enter to complete this run.");
-                Quit
+                cli_act(Quit, "", opt)
             },
             _ => {
                 opt.iface = fs.get(0).unwrap().to_owned();
@@ -225,11 +240,13 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
             upload(opt.clone());
             println!(".done.");
             println!("\nYou can check on the status of your analysis by going to this URL: https://gibbs.agildata.com/analyses/XXXXXXXXX");
-            println!("Spyglass done! Press enter to complete this run.");
         }
+        cli_act(Quit, "", opt)
+    },
+    Quit => {
+        println!("Spyglass done! Press enter to complete this run. ");
         Quit
     },
-    Quit => panic!("should never be processing a Quit state"),
 } }
 
 fn main() {

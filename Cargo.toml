@@ -22,10 +22,11 @@ version = "0.6.2"
 authors = ["Paul LaCrosse <paul.lacrosse@gmail.com>"]
 
 [dependencies]
+libc = "0.2.10"
 pnet = "0.8.1"
-mysql = { version = "*", default-features = false, features = ["socket"] }
-hyper = { version = "0.7.2", default-features = false, features = ["nightly"] }
-multipart = { version = "*", git = "https://github.com/cybergeek94/multipart.git", default-features = false, features = ["client", "hyper"] }
+mysql = { version = "2.2.1", default-features = false, features = ["socket"] }
+hyper = { version = "0.8.1", default-features = false, features = ["nightly"] }
+multipart = { version = "0.7.0", default-features = false, features = ["client", "hyper"] }
 time = "*"
 regex = "*"
 regex_macros = "*"
