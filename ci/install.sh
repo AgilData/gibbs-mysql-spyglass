@@ -28,8 +28,7 @@ install_rust() {
 	tar -xf rust-nightly-$host.tar.gz
 
 	export LD_LIBRARY_PATH=~/opt/rust/rustc/lib:$LD_LIBRARY_PATH
-	export PATH=~/.rust/rust/rustc/bin:$PATH
-	export PATH=~/.rust/rust/cargo/bin:$PATH
+	export PATH=~/.rust/bin:$PATH
 	rust-nightly-$host/install.sh --prefix=~/.rust/
 
 	popd
