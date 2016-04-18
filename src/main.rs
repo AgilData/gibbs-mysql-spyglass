@@ -232,7 +232,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskSend, "", opt)
     },
     AskSend => {
-        printfl!("Would you like to upload {} this to Gibbs now? [y] ", TMP_FILE);
+        printfl!("Would you like to upload {} to Gibbs now? [y] ", TMP_FILE);
         ChkSend
     },
     ChkSend => {
