@@ -194,18 +194,27 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
             },
             _ => {
                 opt.iface = fs.get(0).unwrap().to_owned();
-                if fs.len() == 1 {
-                    cli_act(AskStart, "", opt)
-                } else {
-                    printfl!("\n    And finally, pick your network interface carrying MySQL traffic? {:?} [{}]", fs, opt.iface);
+                // if fs.len() == 1 {
+                //     cli_act(AskStart, "", opt)
+                // } else {
+                    printfl!("\n    And finally, pick your network interface carrying MySQL traffic? (use one of: {:?}) [{}] ", fs, opt.iface);
                     ChkIface
-                }
+                // }
             },
         }
     },
     ChkIface => {
-        if inp.len() > 0 { opt.iface = inp.to_owned(); }
-        cli_act(AskStart, "", opt)
+        if inp.len() > 0 {
+            if get_iface_names().contains(&inp.to_string()) {
+                opt.iface = inp.to_owned();
+                cli_act(AskStart, "", opt)
+            } else {
+                again("Please enter a valid interface from the list", &opt.iface);
+                lst
+            }
+        } else {
+            cli_act(AskStart, "", opt)
+        }
     },
     AskStart => {
         printfl!("\nSuper! We're all set. Press enter to start data capture.");

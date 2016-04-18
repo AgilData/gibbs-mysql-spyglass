@@ -33,9 +33,11 @@ thread_local!(static OUT: RefCell<File> =
 );
 
 pub fn clear_cap() {
+    debug!("deleting capture file {}", CAP_FILE);
     let _ = fs::remove_file(CAP_FILE);
 }
 fn write_cap(cap: &mut File, msg: &str) {
+    debug!("captured: {}", msg);
     let bytes = match cap.write(msg.as_bytes()) {
         Ok(cnt) => cnt,
         Err(e) => panic!(e),
