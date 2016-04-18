@@ -31,16 +31,6 @@ matrix:
             - libssl-dev  
             - pkg-config
             - gcc-multilib
-    - os: linux
-      env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly OPENSSL_LIB_DIR=/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
-      addons:
-        apt:
-          packages: 
-            - libssl
-            - libssl-dev  
-            - pkg-config
-            - gcc-multilib
-            - musl-tools
 
 install:
   - export PATH="$PATH:$HOME/.cargo/bin"
