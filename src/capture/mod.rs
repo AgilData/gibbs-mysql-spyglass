@@ -18,3 +18,27 @@
 
 pub mod client;
 pub mod sniffer;
+
+use std::io::prelude::*;
+use std::fs::{self, File, OpenOptions};
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::cell::RefCell;
+
+const MAX_CAPTURE: usize = 16 * 1024 * 1024;
+static FILE_SIZE: AtomicUsize = ATOMIC_USIZE_INIT;
+pub static CAP_FILE: &'static str = "spyglass-capture.dat";
+
+thread_local!(static OUT: RefCell<File> =
+    RefCell::new(OpenOptions::new().read(true).append(true).create(true).open(CAP_FILE).unwrap())
+);
+
+pub fn clear_cap() {
+    let _ = fs::remove_file(CAP_FILE);
+}
+fn write_cap(cap: &mut File, msg: &str) {
+    let bytes = match cap.write(msg.as_bytes()) {
+        Ok(cnt) => cnt,
+        Err(e) => panic!(e),
+    };
+    FILE_SIZE.fetch_add(bytes, Ordering::SeqCst);
+}

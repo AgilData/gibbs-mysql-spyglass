@@ -16,8 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
-use util::{TMP_FILE, VERSION, COpts};
-
+use util::COpts;
+use capture::CAP_FILE;
 use hyper;
 
 extern crate multipart;
@@ -38,12 +38,12 @@ pub fn upload(opt: COpts) {
         hdrs.set(Authorization(Basic {
             username: opt.key,
             password: None, }));
-        hdrs.set(UserAgent(format!("AgilData/gibbs-mysql-spyglass/{}", VERSION).to_owned()));
+        hdrs.set(UserAgent(format!("AgilData/gibbs-mysql-spyglass/{}", ::VERSION).to_owned()));
     }
 
     let mut mp = { Multipart::from_request(req).unwrap() };
-    let f: &mut File = &mut File::open(TMP_FILE).unwrap();
-    let _ = mp.write_stream("submission", f, Some(TMP_FILE), None).unwrap();
+    let f: &mut File = &mut File::open(CAP_FILE).unwrap();
+    let _ = mp.write_stream("submission", f, Some(CAP_FILE), None).unwrap();
     let res = mp.send();
 
     debug!("MULTIPART returned {:?}", res);

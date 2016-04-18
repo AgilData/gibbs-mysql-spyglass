@@ -18,14 +18,14 @@
 
 extern crate mysql;
 
+use super::{OUT, write_cap};
+
 use self::mysql::*;
 use std::default::Default;
 
 use ::util::COpts;
 
 use time;
-
-use ::OUT;
 
 use std::io::Write;
 
@@ -53,9 +53,7 @@ pub fn schema(opt: COpts) {
         })
         .unwrap();
 
-    OUT.with(|f| {
-        let mut tmp = f.borrow_mut();
-
+    OUT.with(|f| { let mut cap = f.borrow_mut();
         for t in tables {
             let timespec = time::get_time();
             let millis = timespec.sec * 1000 + timespec.nsec as i64 / 1000 / 1000;
@@ -64,23 +62,23 @@ pub fn schema(opt: COpts) {
                             .map(|x| x.unwrap())
                             .fold((), |_, row| {
                                 let (_, c,): (String, String) = mysql::from_row(row);
-                                let _ = writeln!(tmp, "--GIBBS\tTYPE: DDL\tTIMESTAMP: {}\tSCHEMA: {}\tSQL:\n{};", millis, db, c);
+                                let msg = format!("--GIBBS\tTYPE: DDL\tTIMESTAMP: {}\tSCHEMA: {}\tSQL:\n{};\n",
+                                                  millis, db, c);
+                                write_cap(&mut cap, &msg);
                                 printfl!(".");
                             })
                         });
-
             let _ = pool.prep_exec(format!("SELECT table_rows, data_length, index_length FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'", db, t), ())
                         .map(|res| { res
                             .map(|x| x.unwrap())
                             .fold((), |_, row| {
-                                let (row_count,data_length,index_length): (u64,u64,u64) = mysql::from_row(row);
-                                let _ = writeln!(tmp,
-                                    "--GIBBS\tTYPE: TABLE_STATS\tTIMESTAMP: {}\tTABLE: {}\tROW_COUNT: {}\tDATA_LENGTH: {}\tINDEX_LENGTH: {};",
-                                    millis, t, row_count, data_length, index_length);
+                                let (row_count, data_length, index_length): (u64, u64, u64) = mysql::from_row(row);
+                                let msg = format!("--GIBBS\tTYPE: TABLE_STATS\tTIMESTAMP: {}\tTABLE: {}\tROW_COUNT: {}\tDATA_LENGTH: {}\tINDEX_LENGTH: {};\n",
+                                                  millis, t, row_count, data_length, index_length);
+                                write_cap(&mut cap, &msg);
                                 printfl!(".");
                             })
                         });
-
         }
 
     });

@@ -21,9 +21,6 @@
 use std::net::IpAddr;
 use std::sync::mpsc::Sender;
 
-pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-pub static TMP_FILE: &'static str = "spyglass-capture.dat";
-
 #[derive(Clone, Debug)]
 pub struct COpts {
     pub key: String,

@@ -38,27 +38,22 @@ extern crate time;
 extern crate regex;
 
 use std::thread;
+use std::io;
 
 mod util;
-use util::{COpts, TMP_FILE, VERSION};
+use util::COpts;
 use std::net::{IpAddr, Ipv4Addr};
 use std::fmt::Display;
 
 mod capture;
+use capture::{CAP_FILE, clear_cap};
 use capture::client::schema;
-use capture::sniffer::get_iface_names;
-use capture::sniffer::sniff;
+use capture::sniffer::{get_iface_names, sniff};
 
 mod comm;
 use comm::upload;
 
-use std::cell::RefCell;
-use std::fs::{self, File, OpenOptions};
-use std::io;
-
-thread_local!(static OUT: RefCell<File> =
-    RefCell::new(OpenOptions::new().read(true).append(true).create(true).open(TMP_FILE).unwrap())
-);
+pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum CLIState {
@@ -92,7 +87,7 @@ use CLIState::*;
 extern crate libc;
 use libc::geteuid;
 
-fn actasroot() -> bool { unsafe { geteuid() == 0 } }
+fn act_as_root() -> bool { unsafe { geteuid() == 0 } }
 
 fn again(msg: &str, dflt: &Display) {
     printfl!("{}, please try again [{}] ", msg, dflt);
@@ -104,8 +99,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(ChkPerms, "", opt)
     },
     ChkPerms => {
-        if actasroot() {
-            println!("\nData will be collected to {}", TMP_FILE);
+        if act_as_root() {
+            println!("\nData will be collected to {}", CAP_FILE);
             cli_act(AskKey, "", opt)
         } else {
             println!("Spyglass is not running with needed permissions to help you.");
@@ -232,7 +227,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskSend, "", opt)
     },
     AskSend => {
-        printfl!("Would you like to upload {} to Gibbs now? [y] ", TMP_FILE);
+        printfl!("Would you like to upload {} to Gibbs now? [y] ", CAP_FILE);
         ChkSend
     },
     ChkSend => {
@@ -251,8 +246,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
 } }
 
 fn main() {
-    let _ = fs::remove_file(TMP_FILE);
     let _ = log4rs::init_file("spyglass.toml", Default::default());
+    clear_cap();
 
     let mut st: CLIState = Welcome;
     let mut inp = String::new();

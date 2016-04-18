@@ -16,7 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
-use ::OUT;
+use std::sync::atomic::Ordering;
+use super::{OUT, FILE_SIZE, MAX_CAPTURE, write_cap};
+
 use util::{COpts, mk_ascii, read_int1, read_int2, read_int3};
 
 use std::io::Write;
@@ -214,7 +216,7 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
         return;
     }
 
-    STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut tmp = f.borrow_mut();
+    STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut cap = f.borrow_mut();
         let mut i: usize = 0;
         let mut st = match hm.get(&strm) {
             Some(mss) => mss.clone(),
@@ -229,7 +231,8 @@ fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
             if out.is_some() {
                 let timespec = time::get_time();
                 let millis = timespec.sec * 1000 + timespec.nsec as i64 / 1000 / 1000;
-                let _ = writeln!(tmp, "{}", format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};", millis, strm, out.unwrap()));
+                let msg = format!("--GIBBS\tTIMESTAMP: {}\tSTREAM: {}\t{};\n", millis, strm, out.unwrap());
+                write_cap(&mut cap, &msg);
             }
         }
         debug!("tcp_pyld() out: loop end, c2s={:?}, strm={:?}, st={:?}", c2s, strm, st);
@@ -290,7 +293,7 @@ pub fn get_iface_names() -> Vec<String> {
             let mut ipv4 = false;
             for ip in iface.ips.unwrap() {
                 ipv4 = ipv4 || match ip {
-                    IpAddr::V4(addr) => true,
+                    IpAddr::V4(_) => true,
                     _ => false
                 };
             }
@@ -320,10 +323,10 @@ pub fn sniff(opt: COpts) {
     };
 
     let mut iter = rx.iter();
-    loop {
+    while FILE_SIZE.load(Ordering::SeqCst) < MAX_CAPTURE {  // stop if 1K or less of capture budget left
         match iter.next() {
             Ok(p) => process_pckt(&iface.name[..], &p, &opt),
-            Err(e) => panic!("failure receiving packet: {}", e)
+            Err(e) => panic!("failure receiving packet: {}", e),
         }
     }
 }
