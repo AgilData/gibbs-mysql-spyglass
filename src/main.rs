@@ -255,7 +255,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
                 println!(".failed!");
                 let p = env::current_dir().unwrap();
                 println!("\nSomething prevented the file {}/{} from uploading.", p.display(), CAP_FILE);
-                println!("See if you can send it using this URL: https://gibbs.agildata.com/manualUpoad");
+                println!("See if you can send it using this URL: https://gibbs.agildata.com/manualUpload");
             }
         }
         cli_act(Quit, "", opt)
