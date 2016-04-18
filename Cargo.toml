@@ -1,34 +1,31 @@
-# Gibbs MySQL Spyglass
-# Copyright (C) 2016 AgilData
-#
-# This file is part of Gibbs MySQL Spyglass.
-#
-# Gibbs MySQL Spyglass is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Gibbs MySQL Spyglass is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Gibbs MySQL Spyglass.  If not, see <http:#www.gnu.org/licenses/>.
-
 [package]
-name = "spyglass"
-version = "0.6.5"
 authors = ["Paul LaCrosse <paul.lacrosse@gmail.com>"]
+name = "spyglass"
+version = "0.6.6"
 
 [dependencies]
 libc = "0.2.10"
+log = "*"
 pnet = "0.8.1"
-mysql = { version = "2.2.1", default-features = false, features = ["socket"] }
-hyper = { version = "0.8.1", default-features = false, features = ["nightly"] }
-multipart = { version = "0.7.0", default-features = false, features = ["client", "hyper"] }
-time = "*"
 regex = "*"
 regex_macros = "*"
-log = "*"
-log4rs = { version = "*", features = ["toml"] }
+time = "*"
+
+[dependencies.hyper]
+default-features = false
+features = ["nightly"]
+version = "0.8.1"
+
+[dependencies.log4rs]
+features = ["toml"]
+version = "*"
+
+[dependencies.multipart]
+default-features = false
+features = ["client", "hyper"]
+version = "0.7.0"
+
+[dependencies.mysql]
+default-features = false
+features = ["socket"]
+version = "2.2.1"
