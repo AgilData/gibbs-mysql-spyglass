@@ -100,7 +100,7 @@ fn again(msg: &str, dflt: &Display) {
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     Welcome => {
-        println!("{}", ascii_art());
+        // println!("{}", ascii_art());
         println!("\nWelcome to Gibbs' Spyglass MySQL Traffic Capture Tool. (v{})\n", VERSION);
         cli_act(ChkPerms, "", opt)
     },

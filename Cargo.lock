@@ -1,6 +1,6 @@
 [root]
 name = "spyglass"
-version = "0.6.11"
+version = "0.6.12"
 dependencies = [
  "hyper 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
