@@ -55,6 +55,12 @@ use comm::upload;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+use std::str;
+
+pub fn ascii_art() -> &'static str {
+    str::from_utf8(include_bytes!("GibbsASCII-ShipPlain.txt")).unwrap()
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum CLIState {
     Welcome,
@@ -95,6 +101,7 @@ fn again(msg: &str, dflt: &Display) {
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     Welcome => {
+        println!("{}", ascii_art());
         println!("\nWelcome to Gibbs' Spyglass MySQL Traffic Capture Tool. (v{})\n", VERSION);
         cli_act(ChkPerms, "", opt)
     },
