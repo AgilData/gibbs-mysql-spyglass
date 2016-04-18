@@ -37,8 +37,7 @@ extern crate time;
 
 extern crate regex;
 
-use std::thread;
-use std::io;
+use std::{env, io, thread};
 
 mod util;
 use util::COpts;
@@ -201,12 +200,12 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
             },
             _ => {
                 opt.iface = fs.get(0).unwrap().to_owned();
-                // if fs.len() == 1 {
-                //     cli_act(AskStart, "", opt)
-                // } else {
+                if fs.len() == 1 {
+                    cli_act(AskStart, "", opt)
+                } else {
                     printfl!("\n    And finally, pick your network interface carrying MySQL traffic? (use one of: {:?}) [{}] ", fs, opt.iface);
                     ChkIface
-                // }
+                }
             },
         }
     },
@@ -249,9 +248,15 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     ChkSend => {
         if inp.len() == 0 || inp.to_string().to_uppercase() == "Y" {
             printfl!("\nSending......");
-            upload(opt.clone());
-            println!(".done.");
-            println!("\nYou can check on the status of your analysis by going to this URL: https://gibbs.agildata.com/analyses/XXXXXXXXX");
+            if upload(opt.clone()) {
+                println!(".done.");
+                println!("\nYou can check on the status of your analysis by going to this URL: https://gibbs.agildata.com/analyses/XXXXXXXXX");
+            } else {
+                println!(".failed!");
+                let p = env::current_dir().unwrap();
+                println!("\nSomething prevented the file {}/{} from uploading.", p.display(), CAP_FILE);
+                println!("See if you can send it using this URL: https://gibbs.agildata.com/manualUpoad");
+            }
         }
         cli_act(Quit, "", opt)
     },

@@ -25,14 +25,18 @@ use self::multipart::client::Multipart;
 
 use std::fs::File;
 
-pub fn upload(opt: COpts) {
+pub fn upload(opt: COpts) -> bool {
     debug!("STARTING MULTIPART UPLOAD");
     use hyper::header::{Authorization, Basic, UserAgent};
 
-    let mut req = hyper::client::request::Request::new(
-        hyper::method::Method::Post,
-        hyper::Url::parse("https://gibbs.agildata.com/api/analyses").unwrap()
-    ).unwrap();
+    let mut req = match hyper::client::request::Request::new(
+                            hyper::method::Method::Post,
+                            hyper::Url::parse("https://gibbs.agildata.com/api/analyses").unwrap()
+                        ) {
+                            Ok(o) => o,
+                            Err(e) => { debug!("upload() fail: request={:?}", e); return false },
+                        };
+
     {
         let hdrs = req.headers_mut();
         hdrs.set(Authorization(Basic {
@@ -41,10 +45,18 @@ pub fn upload(opt: COpts) {
         hdrs.set(UserAgent(format!("AgilData/gibbs-mysql-spyglass/{}", ::VERSION).to_owned()));
     }
 
-    let mut mp = { Multipart::from_request(req).unwrap() };
-    let f: &mut File = &mut File::open(CAP_FILE).unwrap();
-    let _ = mp.write_stream("submission", f, Some(CAP_FILE), None).unwrap();
-    let res = mp.send();
-
-    debug!("MULTIPART returned {:?}", res);
+    let mut mp = { match Multipart::from_request(req) {
+                            Ok(o) => o,
+                            Err(e) => { debug!("upload() fail: multipart={:?}", e); return false },
+                         }
+                 };
+    let f = &mut match File::open(CAP_FILE) {
+                           Ok(o) => o,
+                           Err(e) => { debug!("upload() fail: file={:?}", e); return false },
+                       };
+    let _ = mp.write_stream("submission", f, Some(CAP_FILE), None);
+    match mp.send() {
+        Ok(_) => true,
+        Err(e) => { debug!("upload() fail: send={:?}", e); return false },
+    }
 }
