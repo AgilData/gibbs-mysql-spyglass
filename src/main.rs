@@ -45,7 +45,7 @@ mod util;
 use util::COpts;
 
 mod capture;
-use capture::{CAP_FILE, MAX_CAPTURE, clear_cap, set_cap};
+use capture::{CAP_FILE, MAX_CAPTURE, clear_cap, set_cap, cap_size, qry_cnt};
 use capture::client::schema;
 use capture::sniffer::{get_iface_names, sniff};
 
@@ -97,6 +97,8 @@ fn act_as_root() -> bool { unsafe { geteuid() == 0 } }
 fn again(msg: &str, dflt: &Display) {
     printfl!("{}, please try again [{}] ", msg, dflt);
 }
+
+fn rnd_mbs(c: usize) -> usize { c / 1_000_000 + 1}
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     Welcome => {
@@ -231,7 +233,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskStop, "", opt)
     },
     AskStop => {
-        printfl!("Starting capture, will auto-stop after {} bytes, or press enter to stop.", MAX_CAPTURE);
+        printfl!("Starting capture, will auto-stop after {} MB of data, or press enter to stop.",
+                 rnd_mbs(MAX_CAPTURE));
         let sniff_opt = opt.clone();
         let _= thread::spawn(|| {
             sniff(sniff_opt);
@@ -240,7 +243,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     },
     ChkStop => {
         set_cap(false);
-        println!("\nData capture stopped. We found XX queries, totaling YY MB of data.");
+        println!("\nData capture stopped. We found {} queries, totaling {:#} MB of data.",
+                 qry_cnt(), rnd_mbs(cap_size()));
         cli_act(AskSend, "", opt)
     },
     AskSend => {

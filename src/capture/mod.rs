@@ -24,9 +24,10 @@ use std::fs::{self, File, OpenOptions};
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT, AtomicBool, ATOMIC_BOOL_INIT};
 use std::cell::RefCell;
 
-pub const MAX_CAPTURE: usize = 16 * 1024 * 1024;
+pub const MAX_CAPTURE: usize = 16_000_000 - 1;
 static FILE_SIZE: AtomicUsize = ATOMIC_USIZE_INIT;
 static CAP_ON: AtomicBool = ATOMIC_BOOL_INIT;
+static QRY_CNT: AtomicUsize = ATOMIC_USIZE_INIT;
 pub static CAP_FILE: &'static str = "spyglass-capture.dat";
 
 thread_local!(static OUT: RefCell<File> =
@@ -50,3 +51,10 @@ fn write_cap(cap: &mut File, msg: &str) {
         set_cap(false);
     }
 }
+
+pub fn cap_size() -> usize { FILE_SIZE.load(Ordering::SeqCst) }
+
+fn inc_qry() {
+    QRY_CNT.fetch_add(1, Ordering::SeqCst);
+}
+pub fn qry_cnt() -> usize { QRY_CNT.load(Ordering::SeqCst) }

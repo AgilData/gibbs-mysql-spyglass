@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{OUT, chk_cap, write_cap};
+use super::{OUT, chk_cap, write_cap, inc_qry};
 
 use util::{COpts, mk_ascii, read_int1, read_int2, read_int3};
 
@@ -39,7 +39,6 @@ use self::pnet::util::{NetworkInterface, get_network_interfaces};
 use std::cmp;
 use std::cell::RefCell;
 use std::collections::HashMap;
-
 
 thread_local!(static STATES: RefCell<HashMap<u16, PcktState>> =
     RefCell::new(HashMap::new())
@@ -74,6 +73,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 match str::from_utf8(qry) {
                     Ok(x) => {
                         let cr = redact.replace_all(&x, "$p?");
+                        inc_qry();
                         printfl!(".");
                         (MySQLState::Query { seq: nxt_seq, }, Some(format!("TYPE: QUERY\tSQL:\n{}", cr)))
                     },
