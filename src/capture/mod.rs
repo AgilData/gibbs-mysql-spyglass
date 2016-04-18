@@ -21,11 +21,12 @@ pub mod sniffer;
 
 use std::io::prelude::*;
 use std::fs::{self, File, OpenOptions};
-use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT, AtomicBool, ATOMIC_BOOL_INIT};
 use std::cell::RefCell;
 
-const MAX_CAPTURE: usize = 16 * 1024 * 1024;
+pub const MAX_CAPTURE: usize = 16 * 1024 * 1024;
 static FILE_SIZE: AtomicUsize = ATOMIC_USIZE_INIT;
+static CAP_ON: AtomicBool = ATOMIC_BOOL_INIT;
 pub static CAP_FILE: &'static str = "spyglass-capture.dat";
 
 thread_local!(static OUT: RefCell<File> =
@@ -36,11 +37,16 @@ pub fn clear_cap() {
     debug!("deleting capture file {}", CAP_FILE);
     let _ = fs::remove_file(CAP_FILE);
 }
+pub fn set_cap(on: bool) { CAP_ON.store(on, Ordering::SeqCst) }
+pub fn chk_cap() -> bool { CAP_ON.load(Ordering::SeqCst) }
+
 fn write_cap(cap: &mut File, msg: &str) {
     debug!("captured: {}", msg);
     let bytes = match cap.write(msg.as_bytes()) {
         Ok(cnt) => cnt,
         Err(e) => panic!(e),
     };
-    FILE_SIZE.fetch_add(bytes, Ordering::SeqCst);
+    if FILE_SIZE.fetch_add(bytes, Ordering::SeqCst) + bytes > MAX_CAPTURE {
+        set_cap(false);
+    }
 }

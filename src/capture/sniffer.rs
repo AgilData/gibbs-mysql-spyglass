@@ -16,8 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Gibbs MySQL Spyglass.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::sync::atomic::Ordering;
-use super::{OUT, FILE_SIZE, MAX_CAPTURE, write_cap};
+use super::{OUT, chk_cap, write_cap};
 
 use util::{COpts, mk_ascii, read_int1, read_int2, read_int3};
 
@@ -95,9 +94,9 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 match pyld[0] {
                     0x00 | 0xfe => (MySQLState::Wait, Some(String::from("TYPE: QUERY_OK"))),
                     0xff => (MySQLState::Wait, Some(String::from("TYPE: QUERY_ERROR"))),
-                    0xfc => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int2(&pyld[1..])}, None),
-                    0xfd => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int3(&pyld[1..])}, None),
-                    _ => (MySQLState::Columns { seq: nxt_seq, num: 1, cnt: read_int1(pyld)}, None)
+                    0xfc => (MySQLState::Columns { seq: nxt_seq, num: read_int2(&pyld[1..]), cnt: 0, }, None),
+                    0xfd => (MySQLState::Columns { seq: nxt_seq, num: read_int3(&pyld[1..]), cnt: 0, }, None),
+                    _ => (MySQLState::Columns { seq: nxt_seq, num: read_int1(pyld), cnt: 0,  }, None)
                 }
             }
         },
@@ -109,7 +108,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 match pyld[0] {
                     // columns are followed by an EOF_Packet, then the rows
                     0xfe => (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None),
-                    _ => (MySQLState::Columns { seq: nxt_seq, num: num + 1, cnt: cnt, }, None)
+                    _ => (MySQLState::Columns { seq: nxt_seq, num: num, cnt: cnt + 1, }, None)
                 }
             }
         },
@@ -323,7 +322,7 @@ pub fn sniff(opt: COpts) {
     };
 
     let mut iter = rx.iter();
-    while FILE_SIZE.load(Ordering::SeqCst) < MAX_CAPTURE {  // stop if 1K or less of capture budget left
+    while chk_cap() {
         match iter.next() {
             Ok(p) => process_pckt(&iface.name[..], &p, &opt),
             Err(e) => panic!("failure receiving packet: {}", e),

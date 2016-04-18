@@ -45,7 +45,7 @@ mod util;
 use util::COpts;
 
 mod capture;
-use capture::{CAP_FILE, clear_cap};
+use capture::{CAP_FILE, MAX_CAPTURE, clear_cap, set_cap};
 use capture::client::schema;
 use capture::sniffer::{get_iface_names, sniff};
 
@@ -227,10 +227,11 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         ChkStart
     },
     ChkStart => {
+        set_cap(true);
         cli_act(AskStop, "", opt)
     },
     AskStop => {
-        printfl!("Starting capture, press enter to stop.");
+        printfl!("Starting capture, will auto-stop after {} bytes, or press enter to stop.", MAX_CAPTURE);
         let sniff_opt = opt.clone();
         let _= thread::spawn(|| {
             sniff(sniff_opt);
@@ -238,6 +239,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         ChkStop
     },
     ChkStop => {
+        set_cap(false);
         println!("\nData capture stopped. We found XX queries, totaling YY MB of data.");
         cli_act(AskSend, "", opt)
     },
