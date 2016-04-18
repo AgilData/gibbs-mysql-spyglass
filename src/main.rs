@@ -105,6 +105,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     },
     ChkPerms => {
         if actasroot() {
+            println!("\nData will be collected to {}", TMP_FILE);
             cli_act(AskKey, "", opt)
         } else {
             println!("Spyglass is not running with needed permissions to help you.");
@@ -231,7 +232,7 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
         cli_act(AskSend, "", opt)
     },
     AskSend => {
-        printfl!("Would you like to send this to Gibbs now? [y] ");
+        printfl!("Would you like to upload {} to Gibbs now? [y] ", TMP_FILE);
         ChkSend
     },
     ChkSend => {
