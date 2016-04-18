@@ -38,11 +38,11 @@ extern crate time;
 extern crate regex;
 
 use std::{env, io, thread};
+use std::net::{IpAddr, Ipv4Addr};
+use std::fmt::Display;
 
 mod util;
 use util::COpts;
-use std::net::{IpAddr, Ipv4Addr};
-use std::fmt::Display;
 
 mod capture;
 use capture::{CAP_FILE, clear_cap};
@@ -267,6 +267,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
 } }
 
 fn main() {
+    env::set_var("RUST_BACKTRACE", "1");
+
     let _ = log4rs::init_file("spyglass.toml", Default::default());
     clear_cap();
 
