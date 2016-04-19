@@ -29,7 +29,7 @@ macro_rules! printfl {
 
 #[macro_use]
 extern crate log;
-extern crate log4rs;
+extern crate env_logger;
 
 extern crate hyper;
 
@@ -277,8 +277,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
+    let _ = env_logger::init();
 
-    let _ = log4rs::init_file("spyglass.toml", Default::default());
     clear_cap();
 
     let mut st: CLIState = Welcome;

@@ -1,11 +1,11 @@
 [root]
 name = "spyglass"
-version = "0.6.20"
+version = "0.6.21"
 dependencies = [
+ "env_logger 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "log4rs 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "multipart 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mysql 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pnet 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -21,11 +21,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "memchr 0.1.11 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "antidote"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "bitflags"
@@ -71,11 +66,6 @@ dependencies = [
  "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 0.5.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "crossbeam"
-version = "0.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "env_logger"
@@ -184,24 +174,6 @@ dependencies = [
 name = "log"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "log4rs"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "antidote 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
- "crossbeam 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "libc 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde-value 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "toml 0.1.28 (registry+https://github.com/rust-lang/crates.io-index)",
- "typemap 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "winapi 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "matches"
@@ -342,14 +314,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ordered-float"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "num 0.1.32 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "phf"
 version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -475,20 +439,6 @@ version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "serde"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "serde-value"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "ordered-float 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "solicit"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -564,35 +514,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "toml"
-version = "0.1.28"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "serde 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "traitobject"
 version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "traitobject"
-version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "typeable"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "typemap"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "unsafe-any 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "unicase"
@@ -635,14 +564,6 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "void 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "unsafe-any"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "traitobject 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
