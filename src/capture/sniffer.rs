@@ -89,7 +89,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
 
         MySQLState::Query { seq, } => {
             if c2s || nxt_seq != 1 {
-                state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
+                state_act(c2s, 0, MySQLState::Wait, pyld)
             } else {
                 match pyld[0] {
                     0x00 | 0xfe => (MySQLState::Wait, Some(String::from("TYPE: QUERY_OK"))),
@@ -103,7 +103,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
 
         MySQLState::Columns { seq, num, cnt, }=> {
             if c2s {
-                state_act(c2s, nxt_seq, MySQLState::Wait, pyld)
+                state_act(c2s, 0, MySQLState::Wait, pyld)
             } else {
                 match pyld[0] {
                     // columns are followed by an EOF_Packet, then the rows
@@ -115,7 +115,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
 
         MySQLState::Rows { seq, cnt, } => {
             if c2s {
-                state_act(c2s, seq, MySQLState::Wait, pyld)
+                state_act(c2s, 0, MySQLState::Wait, pyld)
             } else {
                 match pyld[0] {
                     0x00 =>

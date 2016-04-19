@@ -254,14 +254,17 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     ChkSend => {
         if inp.len() == 0 || inp.to_string().to_uppercase() == "Y" {
             printfl!("\nSending......");
-            if upload(opt.clone()) {
-                println!(".done.");
-                println!("\nYou can check on the status of your analysis by going to this URL: https://gibbs.agildata.com/analyses/XXXXXXXXX");
-            } else {
-                println!(".failed!");
-                let p = env::current_dir().unwrap();
-                println!("\nSomething prevented the file {}/{} from uploading.", p.display(), CAP_FILE);
-                println!("See if you can send it using this URL: https://gibbs.agildata.com/manualUpload");
+            match upload(opt.clone()) {
+                Some(a) => {
+                    println!(".done.");
+                    println!("\nYou can check on the status of your analysis by going to this URL: https://gibbs.agildata.com/analyses/{}", a);
+                },
+                None => {
+                    println!(".failed!");
+                    let p = env::current_dir().unwrap();
+                    println!("\nSomething prevented the file {}/{} from uploading.", p.display(), CAP_FILE);
+                    println!("See if you can send it using this URL: https://gibbs.agildata.com/manualUpload");
+                },
             }
         }
         cli_act(Quit, "", opt)

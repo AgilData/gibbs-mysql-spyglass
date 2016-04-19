@@ -25,7 +25,9 @@ use self::multipart::client::Multipart;
 
 use std::fs::File;
 
-pub fn upload(opt: COpts) -> bool {
+pub fn upload(opt: COpts) -> Option<String> {
+    let pull_id = regex!(r#"Location: /api/analyses/(\d+),"#);
+
     debug!("STARTING MULTIPART UPLOAD");
     use hyper::header::{Authorization, Basic, UserAgent};
 
@@ -34,7 +36,7 @@ pub fn upload(opt: COpts) -> bool {
                             hyper::Url::parse("https://gibbs.agildata.com/api/analyses").unwrap()
                         ) {
                             Ok(o) => o,
-                            Err(e) => { debug!("upload() fail: request={:?}", e); return false },
+                            Err(e) => { debug!("upload() fail: request={:?}", e); return None },
                         };
 
     {
@@ -47,16 +49,25 @@ pub fn upload(opt: COpts) -> bool {
 
     let mut mp = { match Multipart::from_request(req) {
                             Ok(o) => o,
-                            Err(e) => { debug!("upload() fail: multipart={:?}", e); return false },
+                            Err(e) => { debug!("upload() fail: multipart={:?}", e); return None },
                          }
                  };
     let f = &mut match File::open(CAP_FILE) {
                            Ok(o) => o,
-                           Err(e) => { debug!("upload() fail: file={:?}", e); return false },
+                           Err(e) => { debug!("upload() fail: file={:?}", e); return None },
                        };
     let _ = mp.write_stream("submission", f, Some(CAP_FILE), None);
     match mp.send() {
-        Ok(_) => true,
-        Err(e) => { debug!("upload() fail: send={:?}", e); return false },
+        Ok(o) => {
+            let r = format!("{:?}", o);
+            debug!("upload() good: send={}", r);
+            let (st, nd) = pull_id.find(&r).unwrap();
+            let id = r[st + 24 .. nd - 1].to_string();
+            Some(id)
+        },
+        Err(e) => {
+            debug!("upload() fail: send={:?}", e);
+            None
+        },
     }
 }

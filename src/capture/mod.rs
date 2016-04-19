@@ -42,7 +42,7 @@ pub fn set_cap(on: bool) { CAP_ON.store(on, Ordering::SeqCst) }
 pub fn chk_cap() -> bool { CAP_ON.load(Ordering::SeqCst) }
 
 fn write_cap(cap: &mut File, msg: &str) {
-    debug!("captured: {}", msg);
+    debug!("{}", msg);
     let bytes = match cap.write(msg.as_bytes()) {
         Ok(cnt) => cnt,
         Err(e) => panic!(e),
