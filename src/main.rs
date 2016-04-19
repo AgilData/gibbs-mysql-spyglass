@@ -38,11 +38,11 @@ extern crate time;
 extern crate regex;
 
 use std::{env, io, thread};
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::IpAddr;
 use std::fmt::Display;
 
 mod util;
-use util::COpts;
+use util::{COpts, rd_opt, wr_opt};
 
 mod capture;
 use capture::{CAP_FILE, MAX_CAPTURE, clear_cap, set_cap, cap_size, qry_cnt};
@@ -66,6 +66,7 @@ enum CLIState {
     ChkPerms,
     AskKey,
     ChkKey,
+    StartConn,
     AskHost,
     ChkHost,
     AskPort,
@@ -108,7 +109,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     },
     ChkPerms => {
         if act_as_root() {
-            println!("\nData will be collected to {}", CAP_FILE);
+            println!("Data will be collected to {}/{}",
+                     env::current_dir().unwrap().display(), CAP_FILE);
             cli_act(AskKey, "", opt)
         } else {
             println!("Spyglass is not running with needed permissions to help you.");
@@ -122,16 +124,22 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     },
     ChkKey => {
         // TODO:  inp.contains(Pattern of Regex here to check for non-hex chars)
-        if inp.len() != 40 {
+        if inp.len() == 40 {
+            opt.key = inp.to_owned();
+            cli_act(StartConn, "", opt)
+        } else if inp.len() != 0 || opt.key.len() != 40 {
             again("Key must be 40 hex characters long", &opt.key);
             ChkKey
         } else {
-            opt.key = inp.to_owned();
-            cli_act(AskHost, "", opt)
+            cli_act(StartConn, "", opt)
         }
     },
+    StartConn => {
+        println!("Great! Let's set up your MySQL connection.");
+        cli_act(AskHost, "", opt)
+    },
     AskHost => {
-        printfl!("Great! Let's set up your MySQL connection.\n    What's your MySQL host? [{}] ", opt.host);
+        printfl!("    What's your MySQL host? [{}] ", opt.host);
         ChkHost
     },
     ChkHost => {
@@ -189,9 +197,16 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     ChkDb => {
         if inp.len() > 0 { opt.db = inp.to_owned(); }
         printfl!("\nQuerying schema");
-        schema(opt.clone());
-        println!("\nSchema done.\n");
-        cli_act(AskIface, "", opt)
+        match schema(opt.clone()) {
+            Ok(_) => {
+                println!("\nSchema done.\n");
+                cli_act(AskIface, "", opt)
+            },
+            Err(e) => {
+                println!("\n{:?}", e);
+                cli_act(AskHost, "", opt)
+            },
+        }
     },
     AskIface => {
         let fs = get_iface_names();
@@ -261,8 +276,8 @@ fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
                 },
                 None => {
                     println!(".failed!");
-                    let p = env::current_dir().unwrap();
-                    println!("\nSomething prevented the file {}/{} from uploading.", p.display(), CAP_FILE);
+                    println!("\nSomething prevented the file {}/{} from uploading.",
+                             env::current_dir().unwrap().display(), CAP_FILE);
                     println!("See if you can send it using this URL: https://gibbs.agildata.com/manualUpload");
                 },
             }
@@ -283,17 +298,7 @@ fn main() {
 
     let mut st: CLIState = Welcome;
     let mut inp = String::new();
-    // TODO: initialize below by reading saved values from prior run
-    let mut opt = COpts {
-        key: "".to_string(),
-        host: IpAddr::V4(Ipv4Addr::new(0,0,0,0)),
-        port: 3306,
-        user: "root".to_string(),
-        pass: "".to_string(),
-        db: "mysql".to_string(),
-        iface: "".to_string(),
-        tx: None,
-    };
+    let mut opt = rd_opt();
 
     while st != Quit {
         st = cli_act(st, &inp, &mut opt);
@@ -304,4 +309,5 @@ fn main() {
         }
     }
 
+    wr_opt(opt);
 }

@@ -1,6 +1,6 @@
 [root]
 name = "spyglass"
-version = "0.6.24"
+version = "0.6.25"
 dependencies = [
  "env_logger 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -11,6 +11,7 @@ dependencies = [
  "pnet 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.66 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex_macros 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rust-ini 0.9.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -418,6 +419,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "regex 0.1.66 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex-syntax 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "rust-ini"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

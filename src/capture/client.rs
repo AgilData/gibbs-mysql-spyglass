@@ -29,7 +29,7 @@ use time;
 
 use std::io::Write;
 
-pub fn schema(opt: COpts) {
+pub fn schema(opt: COpts) -> Result<()> {
     let db = opt.db.clone().into_boxed_str();
     let my_opts = Opts {
         ip_or_hostname: Some(opt.host.to_string()),
@@ -39,7 +39,8 @@ pub fn schema(opt: COpts) {
         db_name: Some(opt.db),
         ..Default::default()
     };
-    let pool = mysql::Pool::new(my_opts).unwrap();
+
+    let pool = try!(mysql::Pool::new(my_opts));
 
     let tables: Vec<String> = pool
         .prep_exec("show tables", ())
@@ -82,4 +83,6 @@ pub fn schema(opt: COpts) {
         }
 
     });
+
+    Ok(())
 }

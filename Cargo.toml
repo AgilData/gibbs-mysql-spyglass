@@ -18,7 +18,7 @@
 
 [package]
 name = "spyglass"
-version = "0.6.24"
+version = "0.6.25"
 authors = ["Paul LaCrosse <paul.lacrosse@gmail.com>"]
 
 [dependencies]
@@ -32,3 +32,4 @@ regex = "*"
 regex_macros = "*"
 log = "*"
 env_logger = "*"
+rust-ini = "*"
