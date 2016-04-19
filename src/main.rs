@@ -98,7 +98,7 @@ fn again(msg: &str, dflt: &Display) {
     printfl!("{}, please try again [{}] ", msg, dflt);
 }
 
-fn rnd_mbs(c: usize) -> usize { c / 1_000_000 + 1}
+fn rnd_mbs(c: usize) -> usize { (c - 1) / 1_048_576 + 1}
 
 fn cli_act(lst: CLIState, inp: &str, opt: &mut COpts) -> CLIState { match lst {
     Welcome => {

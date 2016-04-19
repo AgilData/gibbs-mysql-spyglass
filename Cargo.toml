@@ -18,7 +18,7 @@
 
 [package]
 name = "spyglass"
-version = "0.6.21"
+version = "0.6.22"
 authors = ["Paul LaCrosse <paul.lacrosse@gmail.com>"]
 
 [dependencies]

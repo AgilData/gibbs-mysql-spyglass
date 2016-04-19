@@ -24,7 +24,7 @@ use std::fs::{self, File, OpenOptions};
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT, AtomicBool, ATOMIC_BOOL_INIT};
 use std::cell::RefCell;
 
-pub const MAX_CAPTURE: usize = 16_000_000 - 1;
+pub const MAX_CAPTURE: usize = 16_777_216;
 static FILE_SIZE: AtomicUsize = ATOMIC_USIZE_INIT;
 static CAP_ON: AtomicBool = ATOMIC_BOOL_INIT;
 static QRY_CNT: AtomicUsize = ATOMIC_USIZE_INIT;
