@@ -55,7 +55,7 @@ enum MySQLState {
 #[derive(Clone, Debug)]
 enum PcktState {
     Start { lst: MySQLState, },
-    Frag { need: usize, part: Vec<u8>, seq: u8, lst: MySQLState, },
+    Frag { dir: bool, need: usize, part: Vec<u8>, seq: u8, lst: MySQLState, },
 }
 
 fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLState, Option<String>) {
@@ -184,23 +184,24 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                     } else {
                         let mut v: Vec<u8> = Vec::new();
                         v.extend_from_slice(pyld);
-                        (used, PcktState::Frag { need: need, part: v, seq: seq, lst: lst }, None)
+                        (used, PcktState::Frag { dir: c2s, need: need, part: v, seq: seq, lst: lst }, None)
                     }
                 },
             }
         },
 
-        PcktState::Frag { mut need, mut part, seq, lst } => {
-            if need == 0 && part.len() == 4 {
-                need = mysql_packet_length(&part[..]);
-            }
-            let (used, need, pyld) = mysql_frag(need, bs);
-            part.extend_from_slice(pyld);
-            if need == 0 && part.len() > 4 {
-                let (nxt, out) = state_act(c2s, seq, lst, &part[4..]);
-                (used, PcktState::Start { lst: nxt, }, out)
+        PcktState::Frag { dir, need, mut part, seq, lst } => {
+            if dir != c2s {
+                (0, PcktState::Start { lst: MySQLState::Wait, }, None)
             } else {
-                (used, PcktState::Frag { need: need, part: part, seq: seq, lst: lst }, None)
+                let (used, need, pyld) = mysql_frag(need, bs);
+                part.extend_from_slice(pyld);
+                if need == 0 {
+                    let (nxt, out) = state_act(c2s, seq, lst, &part[..]);
+                    (used, PcktState::Start { lst: nxt, }, out)
+                } else {
+                    (used, PcktState::Frag { dir: c2s, need: need, part: part, seq: seq, lst: lst }, None)
+                }
             }
         },
 
