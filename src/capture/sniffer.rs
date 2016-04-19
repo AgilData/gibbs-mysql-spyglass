@@ -104,12 +104,10 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
         MySQLState::Columns { seq, num, cnt, }=> {
             if c2s {
                 state_act(c2s, 0, MySQLState::Wait, pyld)
+            } else if cnt < num {
+                (MySQLState::Columns { seq: nxt_seq, num: num, cnt: cnt + 1, }, None)
             } else {
-                match pyld[0] {
-                    // columns are followed by an EOF_Packet, then the rows
-                    0xfe => (MySQLState::Rows { seq: nxt_seq, cnt: 0, }, None),
-                    _ => (MySQLState::Columns { seq: nxt_seq, num: num, cnt: cnt + 1, }, None)
-                }
+                (MySQLState::Rows { seq: nxt_seq, cnt: 1, }, None)
             }
         },
 
@@ -118,10 +116,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                 state_act(c2s, 0, MySQLState::Wait, pyld)
             } else {
                 match pyld[0] {
-                    0x00 =>
-                        // As of MySQL 5.7.5, OK packes are also used to indicate EOF, and EOF packets are deprecated.
-                        (MySQLState::Wait, Some(String::from("TYPE: RESULT_SET"))),
-                    0xfe => {
+                    0xfe | 0x00 => {
                         // EOF_Packet may contain useful information on index usage depending on
                         // the protocol version and configuration in use
                         let flg0 = if pyld.len() > 3 { pyld[3] } else { 0 };
@@ -130,7 +125,7 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
                                     cnt, flg1 & 0x08 != 0, flg0 & 0x20 != 0, flg0 & 0x10 != 0)))
                     },
                     0xff => (MySQLState::Wait, Some(String::from("TYPE: QUERY_ERROR"))),
-                    _ => (MySQLState::Rows { seq: nxt_seq, cnt: cnt + 1, }, None)
+                    _ => (MySQLState::Rows { seq: nxt_seq, cnt: cnt + 1, }, None),
                 }
             }
         },
@@ -140,33 +135,32 @@ fn state_act(c2s: bool, nxt_seq: u8, lst: MySQLState, pyld: &[u8]) -> (MySQLStat
 
 fn mysql_frag(need: usize, bs: &[u8]) -> (usize, usize, &[u8]) {
     let used = cmp::min(need, bs.len());
-    let pyld = &bs[0..used];
+    let pyld = &bs[..used];
     let need = need - used;
     debug!("mysql_frag() out: used={:?}, need={:?}, pyld={:?}", used, need, mk_ascii(pyld));
     (used, need, pyld)
 }
 
-fn mysql_packet_length(bs: &[u8]) -> usize {
-    (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16)
+fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
+    if bs.len() < 4 {
+        let used = bs.len();
+        (used, 4 - used, 0, bs)
+    } else {
+        let len: usize = (bs[0] as usize) + ((bs[1] as usize) << 8) + ((bs[2] as usize) << 16);
+        let seq: u8 = bs[3];
+        let used = cmp::min(len + 4, bs.len());
+        let pyld = &bs[..used];
+        let need = len + 4 - used;
+        (used, need, seq, pyld)
+    }
 }
 
-fn mysql_next(bs: &[u8]) -> (usize, usize, u8, &[u8]) {
-    match bs.len() {
-        0 ... 3 => {
-            // not enough bytes to know how many bytes we need beyond the header
-            let used = bs.len();
-            let need = 4 - used;
-            let pyld = &bs[0..used];
-            (used, need, 0, pyld)
-        },
-        _ => {
-            let len = mysql_packet_length(bs);
-            let seq: u8 = bs[3];
-            let used = cmp::min(4 + len, bs.len());
-            let pyld = &bs[0..used];
-            let need = len + 4 - used;
-            (used, need, seq, pyld)
-        }
+fn get_lst_seq(lst: &MySQLState) -> u8 {
+    match *lst {
+        MySQLState::Wait => 0,
+        MySQLState::Query { seq, } => seq,
+        MySQLState::Columns { seq, .. } => seq,
+        MySQLState::Rows { seq, .. } => seq,
     }
 }
 
@@ -178,13 +172,13 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                 MySQLState::Wait if !c2s => (bs.len(), PcktState::Start { lst: lst, }, None),
                 _ => {
                     let (used, need, seq, pyld) = mysql_next(bs);
-                    if need == 0 && pyld.len() > 4 {
+                    if need == 0 {
                         let (nxt, out) = state_act(c2s, seq, lst, &pyld[4..]);
                         (used, PcktState::Start { lst: nxt, }, out)
                     } else {
                         let mut v: Vec<u8> = Vec::new();
                         v.extend_from_slice(pyld);
-                        (used, PcktState::Frag { dir: c2s, need: need, part: v, seq: seq, lst: lst }, None)
+                        (used, PcktState::Frag { dir: c2s, need: need, part: v, seq: get_lst_seq(&lst), lst: lst }, None)
                     }
                 },
             }
@@ -197,8 +191,8 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
                 let (used, need, pyld) = mysql_frag(need, bs);
                 part.extend_from_slice(pyld);
                 if need == 0 {
-                    let (nxt, out) = state_act(c2s, seq, lst, &part[..]);
-                    (used, PcktState::Start { lst: nxt, }, out)
+                    let (_, nxt, out) = nxt_state(c2s, PcktState::Start { lst: lst, }, &part[..]);
+                    (used, nxt, out)
                 } else {
                     (used, PcktState::Frag { dir: c2s, need: need, part: part, seq: seq, lst: lst }, None)
                 }
@@ -209,12 +203,12 @@ fn nxt_state(c2s: bool, st: PcktState, bs: &[u8]) -> (usize, PcktState, Option<S
 }
 
 fn tcp_pyld(c2s: bool, strm: u16, bs: &[u8]) {
-    debug!("tcp_pyld() in: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
-
     if bs.len() == 0 {
         // ignore empty packets
         return;
     }
+
+    debug!("tcp_pyld() in: c2s={:?}, strm={:?}, bs={:?}", c2s, strm, mk_ascii(bs));
 
     STATES.with(|rc| { let mut hm = rc.borrow_mut(); OUT.with(|f| { let mut cap = f.borrow_mut();
         let mut i: usize = 0;
@@ -317,7 +311,8 @@ pub fn sniff(opt: COpts) {
         },
     };
 
-    let (_, mut rx) = match datalink_channel(&iface, 0, 4096, Layer2) {
+    let rd_buf_sz = 262_144;  // 4_194_304 // 4096
+    let (_, mut rx) = match datalink_channel(&iface, 0, rd_buf_sz, Layer2) {
         Ok((tx, rx)) => (tx, rx),
         Err(e) => panic!("failure opening datalink: {}", e),
     };
