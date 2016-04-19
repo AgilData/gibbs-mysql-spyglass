@@ -1,6 +1,6 @@
 [root]
 name = "spyglass"
-version = "0.6.22"
+version = "0.6.23"
 dependencies = [
  "env_logger 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
