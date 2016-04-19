@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+set -e
 BASE_URL="https://github.com/AgilData/gibbs-mysql-spyglass/releases/download"
-VERSION="v0.6.27"
+VERSION="v0.6.28"
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
         PLATFORM="x86_64-unknown-linux-gnu"
@@ -20,7 +21,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 FILENAME="gibbs-mysql-spyglass-${VERSION}-${PLATFORM}.tar.gz"
-wget $BASE_URL/$VERSION/$FILENAME
+curl --remote-name -fL $BASE_URL/$VERSION/$FILENAME
 tar -xvf $FILENAME
 
 echo "Spyglass is ready, type ./spyglass to run it!"
