@@ -26,9 +26,9 @@ matrix:
       env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
         apt:
-          packages: 
+          packages:
             - libssl
-            - libssl-dev  
+            - libssl-dev
             - pkg-config
             - gcc-multilib
 
@@ -53,7 +53,7 @@ deploy:
       secure: H6tmc0kFSM1hR0hZh016PzFvBiquOqgDCJYlEprnDp/s96ojBb9FUhQWbG7TclzDKT1z7F1RxA+WT4Lp0Fe7VH8/t0EO/C9jxmZCPleNWjIIhQWqRtNOYbXFN+v84c32Y0lNwpJFCrqr596p5juHygmN5LS17itFWXhm2nof5zy5p9YTs6Wc7x0h8MONFeIULXMVUAF84x8QSN1MlqlhPYlPAzlkFQSzgYyJZQXUwnKeP2Ur0G61fy2vrHXNMajFUOsdHrtCuDUUFARIc7Pi1s/COvIuE+cx1fNvHFD5wVd5bk+RKUkKJw6jz6+aOOF+rfjkNTx/IfgexF21xoQKvfIO8GSqD/4FOPd002frBD0WStVekOjvJOIEVztGoEmORgeXCyZPWlFHuxmcsw5Tp7oi7UHZ0ao7vWfsQ8QaoNDS7kpHneqFwTn+dqII1vxmb2nscxjeIqK3fFDe92Ful3v/njFHSs4/Qd6ujGy3/x1bXz+faG6uaUBXJ1uwiBVCN4g8dqg4eVga5DR9Y+hfwPAWPJLciX2WuaDseF+AnteCgLE28lrwOfdx+CuykXBUwuUKIUhAG8oDOgGGaddv8C/TvVEdejVIsiIJzQPgd/yZP3n2fhGQitPPLV9p7KtbzU9Pe+Y23QOsKHTgZaboiueTh+4mOdmZ/7uQfH0xuOI=
   file: ${PROJECT_NAME}-${TRAVIS_TAG}-${TARGET}.tar.gz
   # don't delete the artifacts from previous phases
-  skip_cleanup: true
+  skip_cleanup: false
   # deploy when a new tag is pushed
   on:
     # channel to use to produce the release artifacts
