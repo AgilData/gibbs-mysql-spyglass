@@ -7,7 +7,7 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
         DISTRO=$(cat /etc/*-release | grep '^ID_LIKE=' | awk -F= '{print $2}' | sed 's/\"//g')
         if [ -z "$DISTRO" ]; then
 			DISTRO=$(cat /etc/*-release | grep '^ID=' | awk -F= '{print $2}' | sed 's/\"//g')
-		fi  
+		fi
 		echo DISTRO=$DISTRO
         if [[ "$DISTRO" == "fedora" ]]; then
                 yum install -y openssl-devel
