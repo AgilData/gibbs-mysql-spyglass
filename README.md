@@ -17,3 +17,5 @@ curl -s https://raw.githubusercontent.com/AgilData/gibbs-mysql-spyglass/master/i
 
 # Developer Prerequisites
 https://www.rustup.rs/
+
+
