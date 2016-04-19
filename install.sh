@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 BASE_URL="https://github.com/AgilData/gibbs-mysql-spyglass/releases/download"
-VERSION="v0.6.15"
+VERSION="v0.6.16"
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
         PLATFORM="x86_64-unknown-linux-gnu"
