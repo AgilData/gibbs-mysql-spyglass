@@ -37,6 +37,8 @@ extern crate time;
 
 extern crate regex;
 
+extern crate zip;
+
 use std::{env, io, thread};
 use std::net::IpAddr;
 use std::fmt::Display;
