@@ -37,6 +37,7 @@ install_musl() {
 	make
 	sudo make install
 	cd ..
+	export PATH=$PATH:/usr/local/musl/bin
 }
 
 install_rustup() {
