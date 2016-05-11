@@ -9,7 +9,7 @@ disable_cross_doctests() {
 
   case "$TRAVIS_OS_NAME" in
     linux)
-      host=x86_64-unknown-linux-gnu
+      host=x86_64-unknown-linux-musl
       ;;
     osx)
       host=x86_64-apple-darwin

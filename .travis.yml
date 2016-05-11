@@ -23,7 +23,7 @@ matrix:
     - os: osx
       env: TARGET=x86_64-apple-darwin CHANNEL=nightly
     - os: linux
-      env: TARGET=x86_64-unknown-linux-gnu CHANNEL=nightly OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
+      env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
         apt:
           packages:
@@ -31,6 +31,13 @@ matrix:
             - libssl-dev
             - pkg-config
             - gcc-multilib
+            - build-essential 
+            - cmake 
+            - curl 
+            - file 
+            - git 
+            - sudo 
+            - xutils-dev 
 
 install:
   - export PATH="$PATH:$HOME/.cargo/bin"

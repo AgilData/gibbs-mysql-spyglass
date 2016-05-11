@@ -4,7 +4,7 @@ set -ex
 
 case "$TRAVIS_OS_NAME" in
   linux)
-    host=x86_64-unknown-linux-gnu
+    host=x86_64-unknown-linux-musl
     ;;
   osx)
     host=x86_64-apple-darwin
@@ -13,6 +13,30 @@ esac
 
 mktempd() {
   echo $(mktemp -d 2>/dev/null || mktemp -d -t tmp)
+}
+
+install_openssl() {
+	export VERS=1.0.2g
+	curl -O https://www.openssl.org/source/openssl-$VERS.tar.gz
+	tar xvzf openssl-$VERS.tar.gz
+	cd openssl-$VERS
+	env CC=musl-gcc ./config --prefix=/usr/local/musl
+	env C_INCLUDE_PATH=/usr/local/musl/include/ make depend
+	make
+	sudo make install
+	export OPENSSL_INCLUDE_DIR=/usr/local/musl/include/
+	export OPENSSL_LIB_DIR=/usr/local/musl/lib/
+	export OPENSSL_STATIC=1
+	cd ..
+}
+
+install_musl() {
+	git clone git://git.musl-libc.org/musl
+	cd musl
+	./configure
+	make
+	sudo make install
+	cd ..
 }
 
 install_rustup() {
@@ -27,6 +51,8 @@ install_rustup() {
   rm -r $td
 
   rustup default nightly-2016-04-14
+  rustup target add x86_64-unknown-linux-musl
+
   rustc -V
   cargo -V
 }
@@ -73,6 +99,8 @@ EOF
 }
 
 main() {
+  install_musl
+  install_openssl
   install_rustup
   install_standard_crates
   configure_cargo
