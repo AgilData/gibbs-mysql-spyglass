@@ -40,6 +40,9 @@ matrix:
             - git 
             - sudo 
             - xutils-dev 
+            - musl 
+            - musl-tools 
+            - musl-dev
 
 install:
   - export PATH="$PATH:$HOME/.cargo/bin"
