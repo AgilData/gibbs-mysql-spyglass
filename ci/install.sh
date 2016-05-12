@@ -22,9 +22,9 @@ install_openssl() {
 	tar xzf openssl-$VERS.tar.gz
 	cd openssl-$VERS
 	env CC=musl-gcc ./config --prefix=/usr/local/musl
-	env C_INCLUDE_PATH=/usr/local/musl/include/ make depend
+	env C_INCLUDE_PATH=/usr/local/musl/include/ make -s depend
 	make
-	sudo make install
+	sudo make -s install
 	export OPENSSL_INCLUDE_DIR=/usr/local/musl/include/
 	export OPENSSL_LIB_DIR=/usr/local/musl/lib/
 	export OPENSSL_STATIC=1
