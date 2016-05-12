@@ -7,7 +7,6 @@ sudo: required
 cache:
   directories:
   - $HOME/.cargo
-  - target/$TARGET
 
 env:
   global:
@@ -20,16 +19,11 @@ env:
 matrix:
   include:
     # Nightly channel
-    - os: osx
-      env: TARGET=i686-apple-darwin CHANNEL=nightly
-    - os: osx
-      env: TARGET=x86_64-apple-darwin CHANNEL=nightly
     - os: linux
       env: TARGET=x86_64-unknown-linux-musl CHANNEL=nightly OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu/ OPENSSL_INCLUDE_DIR=/usr/include/openssl/
       addons:
         apt:
           packages:
-            - libssl
             - libssl-dev
             - pkg-config
             - gcc-multilib
@@ -40,12 +34,8 @@ matrix:
             - git 
             - sudo 
             - xutils-dev 
-            - musl 
-            - musl-tools 
-            - musl-dev
 
 install:
-  - export PATH="$PATH:$HOME/.cargo/bin"
   - bash ci/install.sh
 
 script:
