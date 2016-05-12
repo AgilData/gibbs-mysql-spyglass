@@ -44,9 +44,9 @@ install_rustup() {
   local td=$(mktempd)
 
   pushd $td
-  curl -O https://static.rust-lang.org/rustup/dist/$host/rustup-setup
-  chmod +x rustup-setup
-  ./rustup-setup -y
+  curl -O https://static.rust-lang.org/rustup.sh
+  chmod +x rustup.sh
+  ./rustup.sh -y
   popd
 
   rm -r $td
