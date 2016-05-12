@@ -19,7 +19,7 @@ mktempd() {
 install_openssl() {
 	export VERS=1.0.2g
 	curl -O https://www.openssl.org/source/openssl-$VERS.tar.gz
-	tar xvzf openssl-$VERS.tar.gz
+	tar xzf openssl-$VERS.tar.gz
 	cd openssl-$VERS
 	env CC=musl-gcc ./config --prefix=/usr/local/musl
 	env C_INCLUDE_PATH=/usr/local/musl/include/ make depend
@@ -35,8 +35,8 @@ install_musl() {
 	git clone git://git.musl-libc.org/musl
 	cd musl
 	./configure
-	make
-	sudo make install
+	make -s
+	sudo make -s install
 	cd ..
 	export PATH=$PATH:/usr/local/musl/bin
 	
@@ -58,7 +58,7 @@ install_rustup() {
 
 install_standard_crates() {
   curl -O https://static.rust-lang.org/dist/${NIGHTLY_VERSION}/rust-std-nightly-${TARGET}.tar.gz
-  tar -xvf rust-std-nightly-${TARGET}.tar.gz
+  tar -xf rust-std-nightly-${TARGET}.tar.gz
   cd rust-std-nightly-${TARGET}/
   sudo ./install.sh
   cd ..
