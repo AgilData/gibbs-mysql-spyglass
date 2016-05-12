@@ -48,12 +48,11 @@ install_rustup() {
   ./rustup.sh -y -v
 
   ls -l /usr/local/lib/rustlib/
-  find /usr -name rustup
-  find /home -name rustup
   export PATH=$PATH:"~/.cargo/bin/"
   rustup default nightly-2016-04-14
   rustup target add x86_64-unknown-linux-musl
 
+  which rustc
   rustc -V
   cargo -V
 }
