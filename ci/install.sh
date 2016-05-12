@@ -1,6 +1,7 @@
 # `install` phase: install stuff needed for the `script` phase
 
 set -ex
+export NIGHTLY_VERSION=2016-04-14
 
 case "$TRAVIS_OS_NAME" in
   linux)
@@ -47,7 +48,7 @@ install_rustup() {
   chmod +x rustup.sh
   ./rustup.sh -y -v
 
-  ./rustup.sh default --revision=nightly-2016-04-14
+  ./rustup.sh default --revision=nightly-${NIGHTLY_VERSION}
   ./rustup.sh default --add-target=x86_64-unknown-linux-musl
 
   rustc -V
@@ -55,22 +56,11 @@ install_rustup() {
 }
 
 install_standard_crates() {
-  if [ "$host" != "$TARGET" ]; then
-    if [ ! "$CHANNEL" = "stable" ]; then
-      rustup target add $TARGET
-    else
-      local version=$(rustc -V | cut -d' ' -f2)
-      local tarball=rust-std-${version}-${TARGET}
-
-      local td=$(mktempd)
-      curl -s https://static.rust-lang.org/dist/${tarball}.tar.gz | \
-        tar --strip-components 1 -C $td -xz
-
-      $td/install.sh --prefix=$(rustc --print sysroot)
-
-      rm -r $td
-    fi
-  fi
+  curl -O https://static.rust-lang.org/dist/${NIGHTLY_VERSION}/rust-std-nightly-${TARGET}.tar.gz
+  tar -xvf rust-std-nightly-${TARGET}.tar.gz
+  cd rust-std-nightly-${TARGET}/
+  sudo ./install.sh
+  cd ..
 }
 
 configure_cargo() {
