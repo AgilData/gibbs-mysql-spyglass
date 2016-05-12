@@ -43,15 +43,12 @@ install_musl() {
 install_rustup() {
   local td=$(mktempd)
 
-  pushd $td
   curl -O https://static.rust-lang.org/rustup.sh
   chmod +x rustup.sh
   ./rustup.sh -y
-  popd
 
-  rm -r $td
-
-  export PATH=$PATH:".cargo/bin/"
+  ls -l ~/.cargo/bin/
+  export PATH=$PATH:"~/.cargo/bin/"
   rustup default nightly-2016-04-14
   rustup target add x86_64-unknown-linux-musl
 
