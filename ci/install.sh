@@ -47,9 +47,10 @@ install_rustup() {
   chmod +x rustup.sh
   ./rustup.sh -y -v
 
-  find / -name rustup
   ls -l /usr/local/lib/rustlib/
   ls -l ~/.cargo/bin/
+  find /usr -name rustup
+  find /home -name rustup
   export PATH=$PATH:"~/.cargo/bin/"
   rustup default nightly-2016-04-14
   rustup target add x86_64-unknown-linux-musl
