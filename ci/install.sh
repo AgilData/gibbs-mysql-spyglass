@@ -48,7 +48,6 @@ install_rustup() {
   ./rustup.sh -y -v
 
   ls -l /usr/local/lib/rustlib/
-  ls -l ~/.cargo/bin/
   find /usr -name rustup
   find /home -name rustup
   export PATH=$PATH:"~/.cargo/bin/"
