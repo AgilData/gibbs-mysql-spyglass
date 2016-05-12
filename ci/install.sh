@@ -45,8 +45,10 @@ install_rustup() {
 
   curl -O https://static.rust-lang.org/rustup.sh
   chmod +x rustup.sh
-  ./rustup.sh -y
+  ./rustup.sh -y -v
 
+  find / -name rustup
+  ls -l /usr/local/lib/rustlib/
   ls -l ~/.cargo/bin/
   export PATH=$PATH:"~/.cargo/bin/"
   rustup default nightly-2016-04-14
