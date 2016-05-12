@@ -7,6 +7,7 @@ set -ex
 # to target/$TARGET/{debug,release} which can reduce the number of needed conditionals in the
 # `before_deploy`/packaging phase
 run_test_suite() {
+  export PATH=$PATH:/usr/local/musl/bin
   cargo build --release --target $TARGET --verbose
   cargo test --release --target $TARGET
 
