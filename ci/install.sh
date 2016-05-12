@@ -39,6 +39,9 @@ install_musl() {
 	sudo make install
 	cd ..
 	export PATH=$PATH:/usr/local/musl/bin
+	
+	which musl-gcc
+	ls -l /usr/local/musl/bin
 }
 
 install_rustup() {
