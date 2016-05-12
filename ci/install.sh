@@ -51,6 +51,7 @@ install_rustup() {
 
   rm -r $td
 
+  export PATH=$PATH:".cargo/bin/"
   rustup default nightly-2016-04-14
   rustup target add x86_64-unknown-linux-musl
 
