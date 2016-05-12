@@ -45,8 +45,6 @@ install_musl() {
 }
 
 install_rustup() {
-  local td=$(mktempd)
-
   curl -O https://static.rust-lang.org/rustup.sh
   chmod +x rustup.sh
   ./rustup.sh -y -v
@@ -66,34 +64,11 @@ install_standard_crates() {
   cd ..
 }
 
-configure_cargo() {
-  local prefix=
-  case "$TARGET" in
-    arm*-gnueabihf)
-      prefix=arm-linux-gnueabihf
-      ;;
-    *)
-      return
-      ;;
-  esac
-
-  # information about the cross compiler
-  $prefix-gcc -v
-
-  # tell cargo which linker to use for cross compilation
-  mkdir -p .cargo
-  cat >>.cargo/config <<EOF
-[target.$TARGET]
-linker = "$prefix-gcc"
-EOF
-}
-
 main() {
   install_musl
   install_openssl
   install_rustup
   install_standard_crates
-  configure_cargo
 
   # if you need to install extra stuff add it here
 }
