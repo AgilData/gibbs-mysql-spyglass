@@ -12,7 +12,7 @@ Database administrators and developers can use Spyglass to capture application t
 
 # Installation
 ```
-curl -s https://raw.githubusercontent.com/AgilData/gibbs-mysql-spyglass/master/install.sh | sudo bash
+curl -s https://raw.githubusercontent.com/AgilData/gibbs-mysql-spyglass/master/install.sh | bash
 ```
 
 # Developer Prerequisites
