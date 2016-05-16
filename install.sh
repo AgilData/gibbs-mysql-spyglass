@@ -1,27 +1,17 @@
 #!/usr/bin/env bash
 set -e
 BASE_URL="https://github.com/AgilData/gibbs-mysql-spyglass/releases/download"
-VERSION="v0.6.28"
+VERSION=$(curl -s https://api.github.com/repos/AgilData/gibbs-mysql-spyglass/releases | grep -Po -m1 'tag_name\": \"\Kv[0-9]*\.[0-9*]\.[0-9]*')
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        PLATFORM="x86_64-unknown-linux-gnu"
-        DISTRO=$(cat /etc/*-release | grep '^ID_LIKE=' | awk -F= '{print $2}' | sed 's/\"//g')
-        if [ -z "$DISTRO" ]; then
-			DISTRO=$(cat /etc/*-release | grep '^ID=' | awk -F= '{print $2}' | sed 's/\"//g')
-		fi
-		echo DISTRO=$DISTRO
-        if [[ "$DISTRO" == "fedora" ]]; then
-                yum install -y openssl-devel
-                PLATFORM="fedora"
-        elif [[ "$DISTRO" == "debian" ]]; then
-                apt-get install -y libssl-dev
-        fi
+        PLATFORM="x86_64-unknown-linux-musl"
+		FILENAME="gibbs-mysql-spyglass-${VERSION}-${PLATFORM}.tar.gz"
+		echo "Downloading $BASE_URL/$VERSION/$FILENAME"
+		curl -s --remote-name -fL $BASE_URL/$VERSION/$FILENAME
+		tar -xf $FILENAME
+		echo "Spyglass is ready, type ./spyglass to run it!"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
         PLATFORM="x86_64-apple-darwin"
+        echo "Looks like you're running on a mac? Spyglass is only meant to run on linux servers. If you're a developer, please build from source: https://github.com/AgilData/gibbs-mysql-spyglass"
 fi
 
-FILENAME="gibbs-mysql-spyglass-${VERSION}-${PLATFORM}.tar.gz"
-curl --remote-name -fL $BASE_URL/$VERSION/$FILENAME
-tar -xvf $FILENAME
-
-echo "Spyglass is ready, type ./spyglass to run it!"
